@@ -21,8 +21,11 @@ model User {
   hashedPassword String?
   role           String   @default("USER")
 
-  tokens   Token[]
-  sessions Session[]
+  avatarUrl String?
+
+  tokens            Token[]
+  sessions          Session[]
+  notionOAuthTokens NotionOAuthToken[]
 }
 
 model Session {
@@ -55,6 +58,19 @@ model Token {
   userId Int
 
   @@unique([hashedToken, type])
+}
+
+model NotionOAuthToken {
+  bot_id         String  @id // @db.uuid
+  userId         Int
+  workspace_id   String
+  workspace_name String?
+  workspace_icon String?
+  access_token   String
+  owner          String // Json
+  User           User    @relation(fields: [userId], references: [id])
+
+  @@unique([workspace_id, userId])
 }
 
 // NOTE: It's highly recommended to use an enum for the token type
