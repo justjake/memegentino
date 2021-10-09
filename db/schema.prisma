@@ -26,6 +26,7 @@ model User {
   tokens            Token[]
   sessions          Session[]
   notionOAuthTokens NotionOAuthToken[]
+  GeneratedImage    GeneratedImage[]
 }
 
 model Session {
@@ -71,7 +72,34 @@ model NotionOAuthToken {
   owner          String // Json
   User           User    @relation(fields: [userId], references: [id])
 
+  GeneratedImage GeneratedImage[]
   @@unique([workspace_id, userId])
+}
+
+model GeneratedImage {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdByUser      User             @relation(fields: [createdByUserId], references: [id])
+  createdByUserId    Int
+  createdWithToken   NotionOAuthToken @relation(fields: [createdWithTokenId], references: [bot_id])
+  createdWithTokenId String
+
+
+  topText           String? // eg "how do you do"
+  bottomText        String? // eg "fellow kids"
+  effects           String? // eg "sushihat"
+  sourceBlockId     String // @db.uuid
+  sourceWorkspaceId String // @db.uuid
+
+  // Blob storage in the DB 🤷
+  mimeType String
+  data     Bytes
+
+  allowPublic        Boolean // anyone on the internet can view
+  allowWorkspace     Boolean // only people logged in with the same workspace can view
+  allowBySourceBlock Boolean // OK if the reader is in the workspace and can read the source block
 }
 
 // NOTE: It's highly recommended to use an enum for the token type
