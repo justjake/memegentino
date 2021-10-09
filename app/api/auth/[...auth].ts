@@ -1,5 +1,5 @@
 // app/api/auth/[...auth].ts
-import { passportAuth, VerifyCallbackResult } from "blitz"
+import { passportAuth } from "blitz"
 import db from "db"
 import { getPersonUser, NotionStrategy } from "integrations/notion"
 import { env } from "integrations/unix"
@@ -18,18 +18,7 @@ export default passportAuth({
           tokenURL: `${env("NOTION_BASE_URL")}/v1/oauth/token`,
           authorizationURL: `${env("NOTION_BASE_URL")}/v1/oauth/authorize?owner=user`,
         },
-        async (
-          _req: unknown,
-          _accessToken: string,
-          _unknown: undefined,
-          fetchedOauthData,
-          userProfileData,
-          callback: (
-            err: Error | undefined,
-            user: VerifyCallbackResult | false,
-            info: unknown
-          ) => void
-        ) => {
+        async (_req, _accessToken, _unknown, fetchedOauthData, userProfileData, callback) => {
           try {
             const personUser = getPersonUser(userProfileData)
             const email = personUser.person.email
