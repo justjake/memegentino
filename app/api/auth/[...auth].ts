@@ -2,15 +2,7 @@
 import { passportAuth, VerifyCallbackResult } from "blitz"
 import db from "db"
 import { getPersonUser, NotionStrategy } from "integrations/notion"
-
-function env(name: string): string {
-  const result = process.env[name]
-  if (typeof result === "string") {
-    return result
-  }
-
-  throw new Error(`process.env.${name} undefined`)
-}
+import { env } from "integrations/unix"
 
 export default passportAuth({
   successRedirectUrl: "/",
@@ -28,7 +20,7 @@ export default passportAuth({
         },
         async (
           _req: unknown,
-          accessToken: string,
+          _accessToken: string,
           _unknown: undefined,
           fetchedOauthData,
           userProfileData,
