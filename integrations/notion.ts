@@ -1,7 +1,6 @@
 import * as notionApiTypes from "@notionhq/client/build/src/api-endpoints"
 
 import { Strategy } from "passport-strategy"
-import url from "url"
 import https from "https"
 import { GetUserResponse } from "@notionhq/client/build/src/api-endpoints"
 
@@ -105,7 +104,6 @@ export class NotionStrategy extends Strategy {
   ) {
     options = options || {}
     const self = this
-    console.log(this._clientID, this._clientSecret, this._options)
     if (req.query && req.query.code) {
       self.getOAuthAccessToken(req.query.code, function (status, oauthData) {
         if (status === "error") {
@@ -140,58 +138,59 @@ export class NotionStrategy extends Strategy {
         authUrl.searchParams.set("state", self._options.state)
       }
       const location = authUrl.toString()
-      console.log("redirect", location)
       this.redirect(location)
     }
   }
 
-  getOAuthAccessToken(code, done) {
-    let accessTokenURLObject = url.parse(this._tokenURL)
+  async getOAuthAccessToken(code, done) {
+    let accessTokenURLObject = new URL(this._tokenURL)
+
     const accessTokenBody = {
       grant_type: "authorization_code",
       code,
       redirect_uri: this._options.callbackURL,
     }
 
-    const accessTokenURL = url.format(accessTokenURLObject)
-    accessTokenURLObject = url.parse(accessTokenURL)
     const encodedCredential = Buffer.from(`${this._clientID}:${this._clientSecret}`).toString(
       "base64"
     )
 
     const requestOptions = {
       hostname: accessTokenURLObject.hostname,
-      path: accessTokenURLObject.path,
+      path: accessTokenURLObject.pathname,
       headers: {
         Authorization: `Basic ${encodedCredential}`,
         "Content-Type": "application/json",
       },
       method: "POST",
     }
+
     const accessTokenRequest = https.request(requestOptions, (res) => {
+      let data = ""
       res.on("data", (d) => {
-        const accessTokenObject = JSON.parse(d)
-        done("success", accessTokenObject)
+        data += d
+      })
+
+      res.on("end", () => {
+        try {
+          done("success", JSON.parse(data))
+        } catch (error) {
+          done("error", error)
+        }
       })
     })
 
-    accessTokenRequest.on("error", (error) => {
-      done("error", error)
-    })
-
+    accessTokenRequest.on("error", (error) => done("error", error))
     accessTokenRequest.write(JSON.stringify(accessTokenBody))
     accessTokenRequest.end()
   }
 
   getUserProfile(accessTokenObject, done) {
-    let userProfileObject = url.parse(this._getProfileURL)
-
-    const userProfileURL = url.format(userProfileObject)
-    userProfileObject = url.parse(userProfileURL)
+    const userProfileObject = new URL(this._getProfileURL)
 
     const requestOptions = {
       hostname: userProfileObject.hostname,
-      path: userProfileObject.path,
+      path: userProfileObject.pathname,
       headers: {
         Authorization: `Bearer ${accessTokenObject.access_token}`,
         "Notion-Version": "2021-08-16",
@@ -200,16 +199,21 @@ export class NotionStrategy extends Strategy {
     }
 
     const accessTokenRequest = https.request(requestOptions, (res) => {
+      let data = ""
       res.on("data", (d) => {
-        const userProfile = JSON.parse(d)
-        done("success", userProfile)
+        data += d
+      })
+
+      res.on("end", () => {
+        try {
+          done("success", JSON.parse(data))
+        } catch (error) {
+          done("error", error)
+        }
       })
     })
 
-    accessTokenRequest.on("error", (error) => {
-      done("error", error)
-    })
-
+    accessTokenRequest.on("error", (error) => done("error", error))
     accessTokenRequest.end()
   }
 }
