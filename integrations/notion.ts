@@ -11,7 +11,7 @@ export interface NotionOAuthToken {
   workspace_id: string
   workspace_name?: string
   workspace_icon?: string
-  owner: NotionPersonUser
+  owner: { type: "workspace" } | { type: "user"; user: NotionPersonUser }
 }
 
 export interface NotionStrategyOptions {
@@ -98,51 +98,47 @@ export class NotionStrategy extends Strategy {
     this._getProfileURL = options.getProfileURL || "https://api.notion.com/v1/users"
   }
 
-  authenticate(
+  async authenticate(
     req: Parameters<Strategy["authenticate"]>[0],
     options: Parameters<Strategy["authenticate"]>[1]
   ) {
     options = options || {}
-    const self = this
     if (req.query && req.query.code) {
-      self.getOAuthAccessToken(req.query.code, function (status, oauthData) {
-        if (status === "error") {
-          return self.error(oauthData)
-        } else if (status === "success") {
-          self.getUserProfile(oauthData, function (userProfileStatus, userProfileData) {
-            if (userProfileStatus === "error") {
-              return self.error(userProfileData)
-            } else if (userProfileStatus === "success") {
-              self._verify(
-                req,
-                oauthData.access_token,
-                undefined,
-                oauthData,
-                userProfileData,
-                function (err, user, info) {
-                  if (err) return self.error(err)
-                  if (!user) return self.fail(info as any /* ??? */)
-                  self.success(user)
-                }
-              )
-            }
-          })
+      try {
+        const oauthData = await this.getOAuthAccessToken(req.query.code as string)
+        if (oauthData.owner.type !== "user") {
+          throw new Error(`Notion API token not owned by user, instead: ${oauthData.owner.type}`)
         }
-      })
+
+        this._verify(
+          req,
+          oauthData.access_token,
+          undefined,
+          oauthData,
+          oauthData.owner.user,
+          (err, user, info) => {
+            if (err) return this.error(err)
+            if (!user) return this.fail(info as any /* ??? */)
+            this.success(user)
+          }
+        )
+      } catch (error) {
+        this.error(error)
+      }
     } else {
-      const authUrl = new URL(self._authorizationURL)
-      authUrl.searchParams.set("client_id", self._clientID)
-      authUrl.searchParams.set("redirect_uri", self._options.callbackURL)
+      const authUrl = new URL(this._authorizationURL)
+      authUrl.searchParams.set("client_id", this._clientID)
+      authUrl.searchParams.set("redirect_uri", this._options.callbackURL)
       authUrl.searchParams.set("response_type", "code")
-      if (self._options?.state) {
-        authUrl.searchParams.set("state", self._options.state)
+      if (this._options?.state) {
+        authUrl.searchParams.set("state", this._options.state)
       }
       const location = authUrl.toString()
       this.redirect(location)
     }
   }
 
-  async getOAuthAccessToken(code, done) {
+  async getOAuthAccessToken(code: string): Promise<NotionOAuthToken> {
     let accessTokenURLObject = new URL(this._tokenURL)
 
     const accessTokenBody = {
@@ -165,56 +161,26 @@ export class NotionStrategy extends Strategy {
       method: "POST",
     }
 
-    const accessTokenRequest = https.request(requestOptions, (res) => {
-      let data = ""
-      res.on("data", (d) => {
-        data += d
+    return new Promise<NotionOAuthToken>((resolve, reject) => {
+      const accessTokenRequest = https.request(requestOptions, (res) => {
+        let data = ""
+        res.on("data", (d) => {
+          data += d
+        })
+
+        res.on("end", () => {
+          try {
+            resolve(JSON.parse(data))
+          } catch (error) {
+            reject(error)
+          }
+        })
       })
 
-      res.on("end", () => {
-        try {
-          done("success", JSON.parse(data))
-        } catch (error) {
-          done("error", error)
-        }
-      })
+      accessTokenRequest.on("error", reject)
+      accessTokenRequest.write(JSON.stringify(accessTokenBody))
+      accessTokenRequest.end()
     })
-
-    accessTokenRequest.on("error", (error) => done("error", error))
-    accessTokenRequest.write(JSON.stringify(accessTokenBody))
-    accessTokenRequest.end()
-  }
-
-  getUserProfile(accessTokenObject, done) {
-    const userProfileObject = new URL(this._getProfileURL)
-
-    const requestOptions = {
-      hostname: userProfileObject.hostname,
-      path: userProfileObject.pathname,
-      headers: {
-        Authorization: `Bearer ${accessTokenObject.access_token}`,
-        "Notion-Version": "2021-08-16",
-      },
-      method: "GET",
-    }
-
-    const accessTokenRequest = https.request(requestOptions, (res) => {
-      let data = ""
-      res.on("data", (d) => {
-        data += d
-      })
-
-      res.on("end", () => {
-        try {
-          done("success", JSON.parse(data))
-        } catch (error) {
-          done("error", error)
-        }
-      })
-    })
-
-    accessTokenRequest.on("error", (error) => done("error", error))
-    accessTokenRequest.end()
   }
 }
 

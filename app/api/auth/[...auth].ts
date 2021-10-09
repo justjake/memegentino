@@ -14,7 +14,7 @@ function env(name: string): string {
 
 export default passportAuth({
   successRedirectUrl: "/",
-  errorRedirectUrl: "/",
+  errorRedirectUrl: "/error",
   strategies: [
     {
       strategy: new NotionStrategy(
@@ -87,6 +87,7 @@ export default passportAuth({
               undefined
             )
           } catch (error) {
+            console.error("passportAuth verify error:", error)
             callback(error, false, undefined)
           }
         }
