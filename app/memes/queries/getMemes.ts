@@ -1,22 +1,5 @@
 import { paginate, resolver } from "blitz"
-import db, { Prisma } from "db"
-
-export const MemeDefaultFields: Prisma.MemeSelect = {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  createdByUserId: true,
-  createdWithTokenId: true,
-  topText: true,
-  bottomText: true,
-  effects: true,
-  sourceBlockId: true,
-  sourceWorkspaceId: true,
-  allowBySourceBlock: true,
-  allowPublic: true,
-  allowWorkspace: true,
-  mimeType: true,
-} as const
+import db, { MemeDefaultFields, Prisma } from "db"
 
 interface GetMemesInput
   extends Pick<Prisma.MemeFindManyArgs, "where" | "orderBy" | "skip" | "take"> {}

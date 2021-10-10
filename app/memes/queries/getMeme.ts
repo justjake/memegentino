@@ -1,7 +1,6 @@
 import { resolver, NotFoundError } from "blitz"
-import db from "db"
+import db, { MemeDefaultFields } from "db"
 import { z } from "zod"
-import { MemeDefaultFields } from "./getMemes"
 
 const GetMeme = z.object({
   id: z.string(),

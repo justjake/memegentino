@@ -35,14 +35,9 @@ const UserInfo = () => {
   } else {
     return (
       <>
-        <Link href={Routes.SignupPage()}>
+        <Link href={"/api/auth/notion"}>
           <a className="button small">
-            <strong>Sign Up</strong>
-          </a>
-        </Link>
-        <Link href={Routes.LoginPage()}>
-          <a className="button small">
-            <strong>Login</strong>
+            <strong>Log in with Notion</strong>
           </a>
         </Link>
       </>
