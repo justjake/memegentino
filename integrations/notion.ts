@@ -210,7 +210,6 @@ export function getPersonUser(user: notionApiTypes.GetUserResponse): NotionPerso
 
 export function notionClientProxy(workspaceId: string): NotionClient {
   const baseUrl = new URL("/api/notionProxy", window.location.href).toString()
-  console.log("baseUrl", baseUrl)
   return new NotionClient({
     baseUrl,
     auth: `workspace_id:${workspaceId}`,

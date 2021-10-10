@@ -1,143 +1,165 @@
-import { Suspense } from "react"
+import React, { Suspense, useCallback, useEffect, useState } from "react"
 import { Image, Link, BlitzPage, useMutation, Routes } from "blitz"
 import Layout from "app/core/layouts/Layout"
 import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import logout from "app/auth/mutations/logout"
 import logo from "public/logo.png"
 import { Workspace } from "app/core/components/Workspace"
+import { WorkspacePicker, WorkspaceValue } from "app/core/components/WorkspacePicker"
+import { GetDatabaseResponse } from "@notionhq/client/build/src/api-endpoints"
+import { useQuery } from "react-query"
+import { notionClientProxy } from "integrations/notion"
+import { DatabasePicker, DatabaseValue } from "app/core/components/DatabasePicker"
+import { MemeTemplateGallery } from "app/core/components/MemeTemplateGallery"
 
 /*
  * This file is just for a pleasant getting started page for your new app.
  * You can delete everything in here and start from scratch if you like.
  */
 
+interface EmptyState {
+  workspace?: undefined
+  database?: undefined
+}
+interface WithWorkspace {
+  workspace: WorkspaceValue
+  database?: undefined
+}
+
+interface WithDatabase {
+  workspace: WorkspaceValue
+  database: DatabaseValue
+}
+
+type AppState = EmptyState | WithWorkspace | WithDatabase
+
 const UserInfo = () => {
   const currentUser = useCurrentUser()
   const [logoutMutation] = useMutation(logout)
+  const [state, setState] = useState<AppState>({})
 
-  if (currentUser) {
+  const setWorkspace = useCallback((workspace: WorkspaceValue) => {
+    setState((currentState) => {
+      if (currentState.workspace?.bot_id === workspace.bot_id) {
+        return currentState
+      }
+
+      return {
+        workspace,
+      }
+    })
+  }, [])
+
+  const setDatabase = useCallback((database: DatabaseValue) => {
+    setState((currentState) => {
+      if (currentState.workspace) {
+        return {
+          ...currentState,
+          database,
+        }
+      }
+
+      return currentState
+    })
+  }, [])
+
+  useEffect(() => {
+    if (currentUser && !state.workspace) {
+      const firstWorkspace = currentUser.notionOAuthTokens[0]
+      if (firstWorkspace) {
+        setWorkspace(firstWorkspace)
+      }
+    }
+  }, [state.workspace, currentUser])
+
+  if (!currentUser) {
     return (
       <>
-        <button
-          className="button small"
-          onClick={async () => {
-            await logoutMutation()
-          }}
-        >
-          Logout
-        </button>
-        <div>
-          User id: <code>{currentUser.id}</code>
-          <br />
-          User role: <code>{currentUser.role}</code>
-        </div>
-        {currentUser.notionOAuthTokens.map((workspace) => (
-          <Workspace key={workspace.bot_id} {...workspace} />
-        ))}
-      </>
-    )
-  } else {
-    return (
-      <>
-        <Link href={"/api/auth/notion"}>
-          <a className="button small">
-            <strong>Log in with Notion</strong>
-          </a>
-        </Link>
+        <a href="/api/auth/notion" className="button small">
+          Log in with Notion
+        </a>
       </>
     )
   }
+
+  const { workspace, database } = state
+
+  return (
+    <>
+      <div className="row">
+        <div>
+          {currentUser.name}
+          <br />
+          {currentUser.email}
+        </div>
+        <div>
+          <a href="/api/auth/notion" className="button small">
+            Add Workspace
+          </a>
+          <button
+            className="button small"
+            onClick={async () => {
+              await logoutMutation()
+            }}
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+      {workspace && (
+        <div className="row">
+          <WorkspacePicker
+            onChange={setWorkspace}
+            value={workspace}
+            workspaces={currentUser.notionOAuthTokens}
+          />
+        </div>
+      )}
+      {workspace && (
+        <div className="row">
+          <DatabasePicker
+            key={workspace.bot_id}
+            workspace={workspace}
+            value={database}
+            onChange={setDatabase}
+          />
+        </div>
+      )}
+
+      {database && (
+        <div className="row">
+          <MemeTemplateGallery key={database.id} database={database} workspace={workspace} />
+        </div>
+      )}
+      <style jsx>{`
+        .row {
+          display: flex;
+          justify-content: space-between;
+          width: 50vw;
+          min-width: 480px;
+          margin: 14px 0;
+        }
+      `}</style>
+    </>
+  )
 }
 
 const Home: BlitzPage = () => {
   return (
     <div className="container">
       <main>
-        <div className="logo">
-          <Image src={logo} alt="blitzjs" />
-        </div>
-        <p>
-          <strong>Congrats!</strong> Your app is ready, including user sign-up and log-in.
-        </p>
-        <div className="buttons" style={{ marginTop: "1rem", marginBottom: "1rem" }}>
-          <Suspense fallback="Loading...">
-            <UserInfo />
-          </Suspense>
-        </div>
-        <p>
-          <strong>
-            To add a new model to your app, <br />
-            run the following in your terminal:
-          </strong>
-        </p>
-        <pre>
-          <code>blitz generate all project name:string</code>
-        </pre>
-        <div style={{ marginBottom: "1rem" }}>(And select Yes to run prisma migrate)</div>
-        <div>
-          <p>
-            Then <strong>restart the server</strong>
-          </p>
-          <pre>
-            <code>Ctrl + c</code>
-          </pre>
-          <pre>
-            <code>blitz dev</code>
-          </pre>
-          <p>
-            and go to{" "}
-            <Link href="/projects">
-              <a>/projects</a>
-            </Link>
-          </p>
-        </div>
-        <div className="buttons" style={{ marginTop: "5rem" }}>
-          <a
-            className="button"
-            href="https://blitzjs.com/docs/getting-started?utm_source=blitz-new&utm_medium=app-template&utm_campaign=blitz-new"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-          <a
-            className="button-outline"
-            href="https://github.com/blitz-js/blitz"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Github Repo
-          </a>
-          <a
-            className="button-outline"
-            href="https://discord.blitzjs.com"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Discord Community
-          </a>
-        </div>
+        <Suspense fallback="Loading...">
+          <UserInfo />
+        </Suspense>
       </main>
 
-      <footer>
-        <a
-          href="https://blitzjs.com?utm_source=blitz-new&utm_medium=app-template&utm_campaign=blitz-new"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by Blitz.js
-        </a>
-      </footer>
-
       <style jsx global>{`
-        @import url("https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300;700&display=swap");
-
         html,
         body {
           padding: 0;
           margin: 0;
-          font-family: "Libre Franklin", -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-            Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+          font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu,
+            Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
         }
 
         * {
@@ -145,6 +167,7 @@ const Home: BlitzPage = () => {
           -moz-osx-font-smoothing: grayscale;
           box-sizing: border-box;
         }
+
         .container {
           min-height: 100vh;
           display: flex;
@@ -155,11 +178,11 @@ const Home: BlitzPage = () => {
 
         main {
           padding: 5rem 0;
-          flex: 1;
+          min-width: 512px;
           display: flex;
           flex-direction: column;
-          justify-content: center;
           align-items: center;
+          min-height: 50vh;
         }
 
         main p {
@@ -205,11 +228,21 @@ const Home: BlitzPage = () => {
           grid-gap: 0.5rem;
         }
         .button {
+          font-family: inherit;
           font-size: 1rem;
-          background-color: #6700eb;
+          background-color: #eee;
+          border-radius: 2px;
           padding: 1rem 2rem;
-          color: #f4f4f4;
+          color: inherit;
           text-align: center;
+          border: none;
+          font-weight: normal;
+          text-decoration: none;
+          cursor: default;
+        }
+
+        .button + .button {
+          margin-left: 4px;
         }
 
         .button.small {
@@ -217,7 +250,7 @@ const Home: BlitzPage = () => {
         }
 
         .button:hover {
-          background-color: #45009d;
+          background-color: rgba(0, 0, 0, 0.1);
         }
 
         .button-outline {

@@ -16,7 +16,6 @@ const AuthError: BlitzPage = () => {
   )
 }
 
-AuthError.redirectAuthenticatedTo = "/"
 AuthError.getLayout = (page) => <Layout title="Auth Error">{page}</Layout>
 
 export default AuthError

@@ -26,10 +26,12 @@
   "dependencies": {
     "@notionhq/client": "0.4.2",
     "@prisma/client": "3.2.1",
+    "@types/lodash": "4.14.175",
     "@types/passport": "1.0.7",
     "@types/passport-strategy": "0.2.35",
     "blitz": "0.41.0",
     "final-form": "4.20.4",
+    "lodash": "4.17.21",
     "react": "alpha",
     "react-dom": "alpha",
     "react-final-form": "6.5.7",
