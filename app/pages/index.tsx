@@ -4,6 +4,7 @@ import Layout from "app/core/layouts/Layout"
 import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import logout from "app/auth/mutations/logout"
 import logo from "public/logo.png"
+import { Workspace } from "app/core/components/Workspace"
 
 /*
  * This file is just for a pleasant getting started page for your new app.
@@ -30,6 +31,9 @@ const UserInfo = () => {
           <br />
           User role: <code>{currentUser.role}</code>
         </div>
+        {currentUser.notionOAuthTokens.map((workspace) => (
+          <Workspace key={workspace.bot_id} {...workspace} />
+        ))}
       </>
     )
   } else {

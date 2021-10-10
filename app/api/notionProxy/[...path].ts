@@ -1,7 +1,13 @@
 import { BlitzApiHandler, getSession, NextApiRequest, NextApiResponse } from "blitz"
 import db from "db"
-import { APIErrorCode, Client as NotionApiClient, isNotionClientError } from "@notionhq/client"
+import {
+  APIErrorCode,
+  Client as NotionApiClient,
+  isNotionClientError,
+  LogLevel,
+} from "@notionhq/client"
 import { ClientOptions } from "@notionhq/client/build/src/Client"
+import { env } from "integrations/unix"
 
 const WORKSPACE_ID_PREFIX = "workspace_id:"
 
@@ -28,8 +34,6 @@ function proxyError(message: string): ProxyErrorResponse {
 type NotionProxyErrorResponse = ProxyErrorResponse | NotionErrorResponse
 
 function notionApiProxy(args: {
-  /** HTTP path prefix of your proxy, eg /api/notionApiProxy/ */
-  proxyApiPathPrefix: string
   /**
    * Authenticate the request, and return the Notion client options to use for
    * the request. Typically this involves validating the user's session,
@@ -47,7 +51,7 @@ function notionApiProxy(args: {
     callback: (options: ClientOptions & { auth: NonNullable<ClientOptions["auth"]> }) => void
   ) => void
 }): BlitzApiHandler<NotionProxyErrorResponse> {
-  const { proxyApiPathPrefix, authenticateClientOptions: getClientOptions } = args
+  const { authenticateClientOptions: getClientOptions } = args
 
   return async function notionApiProxy(req, res) {
     const { url, method, body } = req
@@ -64,7 +68,7 @@ function notionApiProxy(args: {
     const clientOptions = await new Promise<ClientOptions>((resolve) =>
       getClientOptions(req, res, resolve)
     )
-    const path = url.split(proxyApiPathPrefix).slice(1).join(proxyApiPathPrefix)
+    let path = url.split("/v1/").slice(1).join("/v1/")
     const client = new NotionApiClient(clientOptions)
 
     try {
@@ -107,7 +111,6 @@ function notionApiProxy(args: {
 }
 
 export default notionApiProxy({
-  proxyApiPathPrefix: "/notionProxy/",
   authenticateClientOptions: async (req, res, callback) => {
     const { userId } = await getSession(req, res)
     if (!userId) {
@@ -153,6 +156,7 @@ export default notionApiProxy({
 
     callback({
       auth: notionOAuthToken.access_token,
+      baseUrl: env("NOTION_BASE_URL"),
     })
   },
 })

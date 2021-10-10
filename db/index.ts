@@ -3,14 +3,14 @@ import { Prisma, PrismaClient } from "@prisma/client"
 
 const EnhancedPrisma = enhancePrisma(PrismaClient)
 
-export const NotionOAuthTokenDefaultFields: Prisma.NotionOAuthTokenSelect = {
+export const NotionOAuthTokenDefaultFields = {
   bot_id: true,
   workspace_icon: true,
   workspace_id: true,
   workspace_name: true,
-} // as const
+} as const
 
-export const MemeDefaultFields: Prisma.MemeSelect = {
+export const MemeDefaultFields = {
   id: true,
   createdAt: true,
   updatedAt: true,

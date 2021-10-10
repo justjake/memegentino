@@ -72,7 +72,6 @@ export class NotionStrategy extends Strategy {
   private _clientID: string
   private _tokenURL: string
   private _authorizationURL: string
-  private _getProfileURL: string
 
   constructor(options: NotionStrategyOptions, verify: NotionVerifyCallback) {
     super()
@@ -97,7 +96,6 @@ export class NotionStrategy extends Strategy {
     this._clientID = options.clientID
     this._tokenURL = options.tokenURL || "https://api.notion.com/v1/oauth/token"
     this._authorizationURL = options.authorizationURL || "https://api.notion.com/v1/oauth/authorize"
-    this._getProfileURL = options.getProfileURL || "https://api.notion.com/v1/users"
   }
 
   async authenticate(
@@ -211,8 +209,10 @@ export function getPersonUser(user: notionApiTypes.GetUserResponse): NotionPerso
 }
 
 export function notionClientProxy(workspaceId: string): NotionClient {
+  const baseUrl = new URL("/api/notionProxy", window.location.href).toString()
+  console.log("baseUrl", baseUrl)
   return new NotionClient({
-    baseUrl: "/api/notionProxy",
+    baseUrl,
     auth: `workspace_id:${workspaceId}`,
     fetch(url, init) {
       const { headers, ...rest } = init || {}
