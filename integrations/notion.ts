@@ -1,8 +1,10 @@
 import * as notionApiTypes from "@notionhq/client/build/src/api-endpoints"
+import { Client as NotionClient } from "@notionhq/client"
 
 import { Strategy } from "passport-strategy"
 import https from "https"
 import { GetUserResponse } from "@notionhq/client/build/src/api-endpoints"
+import { getAntiCSRFToken } from "next/data-client"
 
 export interface NotionOAuthToken {
   access_token: string
@@ -206,4 +208,22 @@ export function getPersonUser(user: notionApiTypes.GetUserResponse): NotionPerso
   }
 
   throw new Error(`Notion user object has unknown type: ${(user as any).type}`)
+}
+
+export function notionClientProxy(workspaceId: string): NotionClient {
+  return new NotionClient({
+    baseUrl: "/api/notionProxy",
+    auth: `workspace_id:${workspaceId}`,
+    fetch(url, init) {
+      const { headers, ...rest } = init || {}
+      return fetch(url, {
+        ...rest,
+        credentials: "include",
+        headers: {
+          ...headers,
+          "anti-csrf": getAntiCSRFToken(),
+        },
+      })
+    },
+  })
 }
