@@ -4,7 +4,15 @@ import {
   findAllFiles,
 } from "app/core/components/MemeTemplateGallery"
 import Layout from "app/core/layouts/Layout"
-import { BlitzPage, useRouter, GetServerSideProps, getSession, Routes, useMutation } from "blitz"
+import {
+  BlitzPage,
+  useRouter,
+  GetServerSideProps,
+  getSession,
+  Routes,
+  useMutation,
+  GetServerSidePropsResult,
+} from "blitz"
 import db, { NotionOAuthTokenDefaultFields } from "db"
 import { Client as NotionClient } from "@notionhq/client"
 import { env } from "integrations/unix"
@@ -23,20 +31,22 @@ interface ShowTemplateProps {
   images: Record<string, string>
 }
 
-type ShowTemplateQuery = Parameters<typeof Routes.ShowTemplate>[0]
-
-export const getServerSideProps: GetServerSideProps<ShowTemplateProps, ShowTemplateParams> = async (
-  context
-) => {
+export const getServerSideProps: GetServerSideProps<
+  ShowTemplateProps,
+  { workspaceId: string; blockId: string }
+> = async (context): Promise<GetServerSidePropsResult<ShowTemplateProps>> => {
   const session = await getSession(context.req, context.res)
-  if (!session.userId) {
+  if (!session.userId || !context.params) {
     return {
-      redirect: "/",
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
     }
   }
 
-  const workspaceId: string = context.params.workspaceId
-  const blockId: string = context.params.blockId
+  const workspaceId = String(context.params.workspaceId)
+  const blockId = String(context.params.blockId)
 
   if (!workspaceId || !blockId) {
     throw new Error("missing param")
@@ -51,7 +61,10 @@ export const getServerSideProps: GetServerSideProps<ShowTemplateProps, ShowTempl
 
   if (!token) {
     return {
-      redirect: "/error?authError=Log in to view this page",
+      redirect: {
+        destination: "/error?authError=Log in to view this page",
+        permanent: false,
+      },
     }
   }
 
