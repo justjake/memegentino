@@ -20,6 +20,7 @@ import html2canvas from "html2canvas"
 interface ShowTemplateProps {
   tokenId: string
   row: DatabaseRowValue
+  images: Record<string, string>
 }
 
 type ShowTemplateQuery = Parameters<typeof Routes.ShowTemplate>[0]
@@ -63,15 +64,39 @@ export const getServerSideProps: GetServerSideProps<ShowTemplateProps, ShowTempl
     page_id: blockId,
   })
 
+  const files = findAllFiles(page)
+  const fileMap: Record<string, string> = {}
+
+  await Promise.all(
+    files.map(async (file) => {
+      // const controller = new AbortController()
+      // const { signal } = controller
+
+      const res = await fetch(file.url /*{ signal }*/)
+      const contentType = res.headers.get("Content-Type")
+      if (!contentType || !contentType.startsWith("image/")) {
+        // controller.abort()
+        return
+      }
+
+      const arrayBuffer = await res.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+      const base64 = buffer.toString("base64")
+
+      fileMap[file.url] = `data:${contentType};base64,${base64}`
+    })
+  )
+
   return {
     props: {
+      images: fileMap,
       tokenId: token.bot_id,
       row: page,
     },
   }
 }
 
-const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId }) => {
+const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId, images }) => {
   const files = findAllFiles(row)
   const [createMutation] = useMutation(createMeme)
   const router = useRouter()
@@ -113,7 +138,8 @@ const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId }) => {
         />
 
         {files.map((file) => {
-          return <MemePreview key={file.url} src={file.url} />
+          const image = images[file.url] || file.url
+          return <MemePreview key={file.url} src={image} />
         })}
       </Form>
     </>
@@ -137,14 +163,17 @@ function MemePreview(props: { src: string }) {
       return
     }
     const canvas = await html2canvas(preview.current)
-    const mimeType = "image/jpeg"
+    const mimeType = props.src.includes("image/png") ? "image/png" : "image/jpeg"
     const base64 = canvas.toDataURL(mimeType).split("base64,")[1]
 
     form.batch(() => {
       form.change("dataBase64", base64)
       form.change("mimeType", mimeType)
     })
-    form.submit()
+
+    setTimeout(() => {
+      form.submit()
+    }, 200)
   }, [form])
 
   const topText = form.getFieldState("topText")?.value || ""
