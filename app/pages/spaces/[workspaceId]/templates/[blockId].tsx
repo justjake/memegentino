@@ -5,11 +5,11 @@ import {
 } from "app/core/components/MemeTemplateGallery"
 import Layout from "app/core/layouts/Layout"
 import {
+  Link,
   BlitzPage,
   useRouter,
   GetServerSideProps,
   getSession,
-  Routes,
   useMutation,
   GetServerSidePropsResult,
 } from "blitz"
@@ -112,12 +112,23 @@ export const getServerSideProps: GetServerSideProps<
 const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId, images }) => {
   const files = findAllFiles(row)
   const [createMutation] = useMutation(createMeme)
-  const router = useRouter()
 
   return (
     <>
+      <div>
+        <Link href="/">
+          <a className="button small">{"<<"} Back</a>
+        </Link>
+      </div>
       <h1>
-        <RecordIcon icon={row.icon} alt="Meme template page icon" width={48} />
+        {row.icon && (
+          <RecordIcon
+            icon={row.icon}
+            alt="Meme template page icon"
+            width={48}
+            style={{ marginRight: 12 }}
+          />
+        )}
         <DatabaseRowTitle row={row} />
       </h1>
 
@@ -178,21 +189,27 @@ function MemePreview(props: { src: string }) {
     )
   }, [form])
 
-  const inscribe = useCallback(async () => {
-    if (!preview.current) {
-      return
-    }
-    const canvas = await html2canvas(preview.current)
-    const mimeType = props.src.includes("image/png") ? "image/png" : "image/jpeg"
-    const base64 = canvas.toDataURL(mimeType).split("base64,")[1]
+  const inscribe = useCallback(
+    async (e: any) => {
+      if (e.preventDefault) {
+        e.preventDefault()
+      }
+      if (!preview.current) {
+        return
+      }
+      const canvas = await html2canvas(preview.current)
+      const mimeType = props.src.includes("image/png") ? "image/png" : "image/jpeg"
+      const base64 = canvas.toDataURL(mimeType).split("base64,")[1]
 
-    form.batch(() => {
-      form.change("dataBase64", base64)
-      form.change("mimeType", mimeType)
-    })
+      form.batch(() => {
+        form.change("dataBase64", base64)
+        form.change("mimeType", mimeType)
+      })
 
-    form.submit()
-  }, [form])
+      form.submit()
+    },
+    [form]
+  )
 
   const topText = form.getFieldState("topText")?.value || ""
   const bottomText = form.getFieldState("bottomText")?.value || ""
@@ -225,8 +242,9 @@ function MemePreview(props: { src: string }) {
         }
 
         img {
-          height: 600px;
+          max-height: 50vh;
           max-width: 100%;
+          margin-bottom: -5px;
         }
 
         .top-text,

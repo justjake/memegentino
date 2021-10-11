@@ -119,7 +119,7 @@ export function PickerSearchInput(props: {
 }
 
 export function DatabasePicker(props: DatabasePickerProps) {
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState("meme")
 
   return (
     <div className="picker">

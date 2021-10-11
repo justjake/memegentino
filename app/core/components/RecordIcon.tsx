@@ -20,12 +20,14 @@ export function PickerCheck(props: {}) {
   )
 }
 
-export function RecordIcon(props: {
+interface RecordIconProps extends HTMLAttributes<HTMLDivElement> {
   width: number
   icon: string | DatabaseValue["icon"] | undefined
   alt: string
-}) {
-  const { width, icon, alt } = props
+}
+
+export function RecordIcon(props: RecordIconProps) {
+  const { width, icon, alt, ...htmlProps } = props
 
   let iconUrl: string = ""
   if (icon && typeof icon === "object") {
@@ -49,9 +51,9 @@ export function RecordIcon(props: {
   return (
     <>
       {iconUrl.startsWith("http") ? (
-        <img alt={alt} src={iconUrl} />
+        <img {...htmlProps} alt={alt} src={iconUrl} />
       ) : (
-        <div className={iconUrl === "" ? "empty" : ""} title={alt}>
+        <div {...htmlProps} className={iconUrl === "" ? "empty" : ""} title={alt}>
           {iconUrl}
         </div>
       )}

@@ -47,12 +47,11 @@ const Layout = ({ title, children }: LayoutProps) => {
           }
 
           main {
-            padding: 5rem 0;
+            padding: 5rem 12px;
             min-width: 512px;
             display: flex;
             max-width: 1024px;
             flex-direction: column;
-            align-items: center;
             min-height: 50vh;
           }
 
