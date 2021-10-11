@@ -226,3 +226,26 @@ export function notionClientProxy(workspaceId: string): NotionClient {
     },
   })
 }
+
+interface CachedNotionFile {
+  url: string
+  expiresTs: number
+}
+
+const SERVER_EXPIRY_WINDOW = 1000 * 60 * 5
+const CLIENT_EXPIRY_WINDOW = 0
+
+const NotionFileUrlCache = new Map<string, CachedNotionFile>()
+
+export function getStableNotionFileUrl(notionFile: CachedNotionFile): string {
+  const url = new URL(notionFile.url)
+  url.search = ""
+  const key = url.toString()
+  const cached = NotionFileUrlCache.get(key)
+  const expiryWindow = process.browser ? CLIENT_EXPIRY_WINDOW : SERVER_EXPIRY_WINDOW
+  if (cached && cached.expiresTs > Date.now() + CLIENT_EXPIRY_WINDOW) {
+    return cached.url
+  }
+  NotionFileUrlCache.set(key, notionFile)
+  return notionFile.url
+}

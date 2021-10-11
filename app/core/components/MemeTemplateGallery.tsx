@@ -2,7 +2,7 @@ import {
   QueryDatabaseParameters,
   QueryDatabaseResponse,
 } from "@notionhq/client/build/src/api-endpoints"
-import { notionClientProxy } from "integrations/notion"
+import { getStableNotionFileUrl, notionClientProxy } from "integrations/notion"
 import { useQuery } from "react-query"
 import React, { Suspense, useState } from "react"
 import { plainText, DatabaseValue, PickerSearchInput } from "./DatabasePicker"
@@ -44,7 +44,10 @@ export function findAllFiles(row: DatabaseRowValue) {
             case "file":
               return {
                 name: file.name,
-                url: file.file.url,
+                url: getStableNotionFileUrl({
+                  expiresTs: Number(new Date(file.file.expiry_time)),
+                  url: file.file.url,
+                }),
               }
           }
         })
@@ -153,6 +156,7 @@ export function MemeTemplateGalleryList(props: MemeTemplateGalleryProps & { sear
         h3 {
           margin: 0;
           margin-bottom: 8px;
+          margin-top: 16px;
           display: flex;
           justify-content: space-between;
         }

@@ -126,7 +126,7 @@ const UserInfo = () => {
         </div>
       )}
 
-      {database && (
+      {database && workspace && (
         <div className="row">
           <MemeTemplateGallery key={database.id} database={database} workspace={workspace} />
         </div>
