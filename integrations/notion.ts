@@ -243,7 +243,7 @@ export function getStableNotionFileUrl(notionFile: CachedNotionFile): string {
   const key = url.toString()
   const cached = NotionFileUrlCache.get(key)
   const expiryWindow = process.browser ? CLIENT_EXPIRY_WINDOW : SERVER_EXPIRY_WINDOW
-  if (cached && cached.expiresTs > Date.now() + CLIENT_EXPIRY_WINDOW) {
+  if (cached && cached.expiresTs > Date.now() + expiryWindow) {
     return cached.url
   }
   NotionFileUrlCache.set(key, notionFile)
