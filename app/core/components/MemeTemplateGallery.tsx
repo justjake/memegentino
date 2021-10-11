@@ -7,17 +7,58 @@ import { useQuery } from "react-query"
 import React, { Suspense, useState } from "react"
 import { plainText, DatabaseValue, PickerSearchInput } from "./DatabasePicker"
 import { WorkspaceValue } from "./WorkspacePicker"
-import { Link } from "blitz"
+import { Link, Routes } from "blitz"
+import { PickerRow } from "./RecordIcon"
 
 export interface MemeTemplateGalleryProps {
   database: DatabaseValue
   workspace: WorkspaceValue
 }
 
-type DatabaseRowValue = QueryDatabaseResponse["results"][number]
+export type DatabaseRowValue = QueryDatabaseResponse["results"][number]
 
-function DatabaseRowTitle(props: { titleProp: string; row: DatabaseRowValue }) {
-  const title = props.row.properties[props.titleProp]
+function isDefined<T>(v: T | undefined): v is T {
+  return v !== undefined
+}
+
+export function findTitleProp(row: DatabaseRowValue) {
+  return Object.entries(row.properties).find(([name, prop]) => prop.type === "title")
+}
+
+export function findAllFiles(row: DatabaseRowValue) {
+  return Object.values(row.properties)
+    .filter((it) => it.type === "files")
+    .flatMap((it) => {
+      if (it.type !== "files") {
+        return []
+      }
+
+      return it.files
+        .map((file) => {
+          switch (file.type) {
+            case "external":
+              return {
+                name: file.name,
+                url: file.external.url,
+              }
+            case "file":
+              return {
+                name: file.name,
+                url: file.file.url,
+              }
+          }
+        })
+        .filter(isDefined)
+    })
+}
+
+export function DatabaseRowTitle(props: { titleProp?: string; row: DatabaseRowValue }) {
+  const titleProp = props.titleProp || findTitleProp(props.row)?.[0]
+  if (!titleProp) {
+    return null
+  }
+
+  const title = props.row.properties[titleProp]
   if (!title || title.type !== "title") {
     return null
   }
@@ -70,20 +111,8 @@ export function MemeTemplateGalleryList(props: MemeTemplateGalleryProps & { sear
     <div className="items">
       {query.data &&
         query.data.map((it) => {
-          const files = databaseFileProps.flatMap((fileProp) => {
-            const files = it.properties[fileProp]
-            if (files?.type !== "files") return []
-
-            return files.files.flatMap((file) => {
-              switch (file.type) {
-                case "file":
-                  return <img key={file.file.url} src={file.file.url} alt={file.name} />
-                case "external":
-                  return <img key={file.external.url} src={file.external.url} alt={file.name} />
-                default:
-                  return null
-              }
-            })
+          const files = findAllFiles(it).map((file) => {
+            return <img key={file.url} src={file.url} alt={file.name} />
           })
 
           if (!files.length) {
@@ -91,7 +120,13 @@ export function MemeTemplateGalleryList(props: MemeTemplateGalleryProps & { sear
           }
 
           return (
-            <Link key={it.id} href={"TODO"}>
+            <Link
+              key={it.id}
+              href={Routes.ShowTemplate({
+                workspaceId: workspace.workspace_id,
+                blockId: it.id,
+              })}
+            >
               <a className="item">
                 {databaseTitleProp && (
                   <h3>
