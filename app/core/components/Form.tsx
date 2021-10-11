@@ -29,7 +29,11 @@ export function Form<S extends z.ZodType<any, any>>({
       validate={validateZodSchema(schema)}
       onSubmit={onSubmit}
       render={({ handleSubmit, submitting, submitError }) => (
-        <form onSubmit={handleSubmit} className="form" {...props}>
+        <form
+          /* this seems to double submit: onSubmit={handleSubmit} */
+          className="form"
+          {...props}
+        >
           {/* Form fields supplied as children are rendered here */}
           {children}
 

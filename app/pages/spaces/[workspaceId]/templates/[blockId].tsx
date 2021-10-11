@@ -118,9 +118,10 @@ const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId, images }) =>
           allowBySourceBlock: true,
         }}
         onSubmit={async (values) => {
+          console.warn("onSubmit", values)
           try {
             const meme = await createMutation(values)
-            router.push(`/api/meme/${meme.id}`)
+            window.location.href = `/api/meme/${meme.id}`
           } catch (error) {
             console.error("form error", error)
             return {
@@ -153,12 +154,18 @@ function MemePreview(props: { src: string }) {
   const [, rerender] = useState({})
 
   useEffect(() => {
-    return form.subscribe(() => rerender({}), {
-      modified: true,
-    })
-  })
+    return form.subscribe(
+      (data) => {
+        console.log("form changed", data.values)
+        rerender({})
+      },
+      {
+        values: true,
+      }
+    )
+  }, [form])
 
-  const enscribe = useCallback(async () => {
+  const inscribe = useCallback(async () => {
     if (!preview.current) {
       return
     }
@@ -171,9 +178,7 @@ function MemePreview(props: { src: string }) {
       form.change("mimeType", mimeType)
     })
 
-    setTimeout(() => {
-      form.submit()
-    }, 200)
+    form.submit()
   }, [form])
 
   const topText = form.getFieldState("topText")?.value || ""
@@ -189,7 +194,7 @@ function MemePreview(props: { src: string }) {
         <div className="bottom-text">{bottomText}</div>
       </div>
       <div className="happening">
-        <button className="button" onClick={enscribe}>
+        <button className="button" onClick={inscribe}>
           Inscribe this meme... forever.
         </button>
       </div>
