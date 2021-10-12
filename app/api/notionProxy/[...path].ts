@@ -74,7 +74,7 @@ function notionApiProxy(args: {
       res.send(result)
       // console.log("200 ok", result)
     } catch (error) {
-      console.error("notionProxy: error", error, { path, method, body })
+      console.error("notionProxy: error", error, { url, path, method, body, query: req.query })
       if (!isNotionClientError(error)) {
         res.statusCode = 500
         res.send({
