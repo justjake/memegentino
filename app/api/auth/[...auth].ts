@@ -23,7 +23,7 @@ export default passportAuth({
             const personUser = getPersonUser(userProfileData)
             const email = personUser.person.email
 
-            const { name, avatar_url: avatarUrl } = personUser
+            const { name, avatar_url: avatarUrl, id: notionHumanId } = personUser
             const oauthData = {
               ...fetchedOauthData,
               owner: JSON.stringify(fetchedOauthData.owner),
@@ -31,7 +31,7 @@ export default passportAuth({
 
             const user = await db.user.upsert({
               where: {
-                email: personUser.person.email,
+                notionUserId: notionHumanId,
               },
               update: {
                 name,
@@ -51,6 +51,7 @@ export default passportAuth({
                 name,
                 email,
                 avatarUrl,
+                notionUserId: notionHumanId,
                 notionOAuthTokens: {
                   create: oauthData,
                 },

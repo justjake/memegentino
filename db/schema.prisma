@@ -21,7 +21,8 @@ model User {
   hashedPassword String?
   role           String   @default("USER")
 
-  avatarUrl String?
+  avatarUrl    String?
+  notionUserId String  @unique
 
   tokens            Token[]
   sessions          Session[]
