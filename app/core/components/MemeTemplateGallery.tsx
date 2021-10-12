@@ -84,31 +84,37 @@ export function MemeTemplateGalleryList(props: MemeTemplateGalleryProps & { sear
     .filter(([, prop]) => prop.type === "files")
     .map((it) => it[0])
 
-  const query = useQuery(["databasePages", workspace.bot_id, database.id, search], async () => {
-    const notion = notionClientProxy(workspace.workspace_id)
+  const query = useQuery(
+    ["databasePages", workspace.bot_id, database.id, search],
+    async () => {
+      const notion = notionClientProxy(workspace.workspace_id)
 
-    const req: QueryDatabaseParameters = {
-      database_id: database.id,
-      sorts: [
-        {
-          direction: "descending",
-          timestamp: "created_time",
-        },
-      ],
-    }
-
-    if (databaseTitleProp && search) {
-      req.filter = {
-        property: databaseTitleProp,
-        title: {
-          contains: search,
-        },
+      const req: QueryDatabaseParameters = {
+        database_id: database.id,
+        sorts: [
+          {
+            direction: "descending",
+            timestamp: "created_time",
+          },
+        ],
       }
-    }
 
-    const pages = await notion.databases.query(req)
-    return pages.results
-  })
+      if (databaseTitleProp && search) {
+        req.filter = {
+          property: databaseTitleProp,
+          title: {
+            contains: search,
+          },
+        }
+      }
+
+      const pages = await notion.databases.query(req)
+      return pages.results
+    },
+    {
+      keepPreviousData: true,
+    }
+  )
 
   return (
     <div className="items">
