@@ -43,7 +43,7 @@ function notionApiProxy(args: {
     callback: (options: ClientOptions & { auth: NonNullable<ClientOptions["auth"]> }) => void
   ) => void
 }): BlitzApiHandler<NotionProxyErrorResponse> {
-  const { authenticateClientOptions: getClientOptions } = args
+  const { authenticateClientOptions } = args
 
   return async function notionApiProxy(req, res) {
     const { url, method, body } = req
@@ -58,7 +58,7 @@ function notionApiProxy(args: {
     }
 
     const clientOptions = await new Promise<ClientOptions>((resolve) =>
-      getClientOptions(req, res, resolve)
+      authenticateClientOptions(req, res, resolve)
     )
     let path = url.split("/v1/").slice(1).join("/v1/")
     const client = new NotionApiClient(clientOptions)
