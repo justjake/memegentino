@@ -35,18 +35,21 @@ function DatabasePickerList(props: DatabasePickerProps & { search: string }) {
     ["databases", props.workspace.bot_id, search],
     async () => {
       const notion = notionClientProxy(props.workspace.workspace_id)
-      const results = await notion.search({
-        query: search === "" ? undefined : search,
-        filter: {
-          property: "object",
-          value: "database",
-        },
-        sort: {
-          timestamp: "last_edited_time",
-          direction: "descending",
-        },
+      // const results = await notion.data({
+      //   query: search === "" ? undefined : search,
+      //   // filter: {
+      //   //   property: "object",
+      //   //   value: "database"
+      //   // },
+      //   // sort: {
+      //   //   timestamp: "last_edited_time",
+      //   //   direction: "descending",
+      //   // },
+      // })
+      const databases = await notion.databases.list()
+      return databases.results.filter(resultIsDatabase).filter((db) => {
+        return plainText(db.title).toLowerCase().includes(search)
       })
-      return results.results.filter(resultIsDatabase)
     },
     {
       keepPreviousData: true,
@@ -119,7 +122,7 @@ export function PickerSearchInput(props: {
 }
 
 export function DatabasePicker(props: DatabasePickerProps) {
-  const [search, setSearch] = useState("meme")
+  const [search, setSearch] = useState("")
 
   return (
     <div className="picker">

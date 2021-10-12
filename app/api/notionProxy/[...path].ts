@@ -23,14 +23,6 @@ interface NotionErrorResponse {
   message: string
 }
 
-function proxyError(message: string): ProxyErrorResponse {
-  return {
-    object: "error",
-    message,
-    code: "proxy_error",
-  }
-}
-
 type NotionProxyErrorResponse = ProxyErrorResponse | NotionErrorResponse
 
 function notionApiProxy(args: {
@@ -80,6 +72,7 @@ function notionApiProxy(args: {
 
       res.statusCode = 200
       res.send(result)
+      // console.log("200 ok", result)
     } catch (error) {
       if (!isNotionClientError(error)) {
         res.statusCode = 500
@@ -157,6 +150,10 @@ export default notionApiProxy({
     callback({
       auth: notionOAuthToken.access_token,
       baseUrl: env("NOTION_BASE_URL"),
+      fetch(url, init) {
+        // console.log("fetch", url, init)
+        return fetch(url, init)
+      },
     })
   },
 })

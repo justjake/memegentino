@@ -5,7 +5,7 @@ import { z } from "zod"
 const K = 1024
 const M = K * K
 
-const CreateMeme = z.object({
+export const CreateMeme = z.object({
   createdWithTokenId: z.string().uuid(),
   sourceBlockId: z.string().uuid(),
   mimeType: z.string().nonempty(),
