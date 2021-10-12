@@ -26,6 +26,7 @@ interface NotionErrorResponse {
 type NotionProxyErrorResponse = ProxyErrorResponse | NotionErrorResponse
 
 function notionApiProxy(args: {
+  removeRouteQueryParam?: string
   /**
    * Authenticate the request, and return the Notion client options to use for
    * the request. Typically this involves validating the user's session,
@@ -43,7 +44,7 @@ function notionApiProxy(args: {
     callback: (options: ClientOptions & { auth: NonNullable<ClientOptions["auth"]> }) => void
   ) => void
 }): BlitzApiHandler<NotionProxyErrorResponse> {
-  const { authenticateClientOptions } = args
+  const { authenticateClientOptions, removeRouteQueryParam } = args
 
   return async function notionApiProxy(req, res) {
     const { url, method, body } = req
@@ -60,7 +61,13 @@ function notionApiProxy(args: {
     const clientOptions = await new Promise<ClientOptions>((resolve) =>
       authenticateClientOptions(req, res, resolve)
     )
-    let path = url.split("/v1/").slice(1).join("/v1/")
+
+    const parsed = new URL(url)
+    if (removeRouteQueryParam) {
+      parsed.searchParams.delete(removeRouteQueryParam)
+    }
+
+    let path = parsed.toString().split("/v1/").slice(1).join("/v1/")
     const client = new NotionApiClient(clientOptions)
 
     try {
@@ -105,6 +112,7 @@ function notionApiProxy(args: {
 }
 
 export default notionApiProxy({
+  removeRouteQueryParam: "notionApiProxyPath",
   authenticateClientOptions: async (req, res, callback) => {
     const { userId } = await getSession(req, res)
     if (!userId) {
