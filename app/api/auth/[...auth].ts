@@ -13,7 +13,10 @@ export default passportAuth({
         {
           clientID: env("NOTION_CLIENT_ID"),
           clientSecret: env("NOTION_CLIENT_SECRET"),
-          callbackURL: "http://localhost:3000/api/auth/notion/callback",
+          callbackURL: `${env(
+            "NEXT_PUBLIC_BASE_URL",
+            "http://localhost:3000"
+          )}/api/auth/notion/callback`,
           getProfileURL: `${env("NOTION_BASE_URL")}/v1/users/me`,
           tokenURL: `${env("NOTION_BASE_URL")}/v1/oauth/token`,
           authorizationURL: `${env("NOTION_BASE_URL")}/v1/oauth/authorize?owner=user`,

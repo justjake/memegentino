@@ -1,5 +1,5 @@
-export function env(name: string): string {
-  const result = process.env[name]
+export function env(name: string, fallback?: string): string {
+  const result = process.env[name] || fallback
   if (typeof result === "string") {
     return result
   }
