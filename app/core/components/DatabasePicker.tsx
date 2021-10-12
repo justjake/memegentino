@@ -46,7 +46,7 @@ function DatabasePickerList(props: DatabasePickerProps & { search: string }) {
       //   //   direction: "descending",
       //   // },
       // })
-      const databases = await notion.databases.list()
+      const databases = await notion.databases.list({})
       return databases.results.filter(resultIsDatabase).filter((db) => {
         return plainText(db.title).toLowerCase().includes(search)
       })
