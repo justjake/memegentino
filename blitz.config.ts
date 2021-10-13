@@ -5,6 +5,7 @@ const config: BlitzConfig = {
     sessionMiddleware({
       cookiePrefix: "memegentino",
       isAuthorized: simpleRolesIsAuthorized,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : undefined,
     }),
   ],
   /* Uncomment this to customize the webpack config

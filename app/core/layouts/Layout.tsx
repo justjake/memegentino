@@ -63,7 +63,7 @@ const Layout = ({ title, children }: LayoutProps) => {
           .button {
             font-family: inherit;
             font-size: 1rem;
-            background-color: #eee;
+            background-color: rgba(30, 30, 30, 0.1);
             border-radius: 2px;
             padding: 1rem 2rem;
             color: inherit;
@@ -83,7 +83,8 @@ const Layout = ({ title, children }: LayoutProps) => {
           }
 
           .button:hover {
-            background-color: rgba(0, 0, 0, 0.1);
+            background-color: rgba(0, 0, 0, 0.15);
+            mix-blend-mode: color-burn;
           }
 
           pre {

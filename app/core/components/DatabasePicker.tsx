@@ -62,6 +62,8 @@ function DatabasePickerList(props: DatabasePickerProps & { search: string }) {
     }
   }, [value, query.data, onChange])
 
+  const isEmpty = query.data && query.data.length === 0 && search === ""
+
   return (
     <div>
       {query.data &&
@@ -77,6 +79,12 @@ function DatabasePickerList(props: DatabasePickerProps & { search: string }) {
             />
           )
         })}
+
+      {isEmpty && (
+        <p>
+          No databases found. Please share your meme templates databases directly with this bot.
+        </p>
+      )}
 
       <style jsx>{`
         div {

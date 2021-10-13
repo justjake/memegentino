@@ -7,7 +7,7 @@ import { useQuery } from "react-query"
 import React, { Suspense, useState } from "react"
 import { plainText, DatabaseValue, PickerSearchInput } from "./DatabasePicker"
 import { WorkspaceValue } from "./WorkspacePicker"
-import { Link, Routes } from "blitz"
+import { Link, Routes, Image } from "blitz"
 import { PickerRow } from "./RecordIcon"
 
 export interface MemeTemplateGalleryProps {
@@ -80,9 +80,6 @@ export function MemeTemplateGalleryList(props: MemeTemplateGalleryProps & { sear
 
   const databaseProps = Object.entries(database.properties)
   const databaseTitleProp = databaseProps.find(([name, prop]) => prop.type === "title")?.[0]
-  const databaseFileProps = databaseProps
-    .filter(([, prop]) => prop.type === "files")
-    .map((it) => it[0])
 
   const query = useQuery(
     ["databasePages", workspace.bot_id, database.id, search],
@@ -109,12 +106,14 @@ export function MemeTemplateGalleryList(props: MemeTemplateGalleryProps & { sear
       }
 
       const pages = await notion.databases.query(req)
-      return pages.results
+      return pages.results.filter((row) => findAllFiles(row).length > 0)
     },
     {
       keepPreviousData: true,
     }
   )
+
+  const isEmpty = query.data && query.data.length === 0 && search === ""
 
   return (
     <div className="items">
@@ -150,13 +149,22 @@ export function MemeTemplateGalleryList(props: MemeTemplateGalleryProps & { sear
             </Link>
           )
         })}
+
+      {isEmpty && <p>No rows in this database contain a file.</p>}
+
       <style jsx>{`
         .item {
           display: flex;
           flex-direction: column;
+          color: blue;
 
           text-decoration: none;
           height: 300px;
+          width: 100%;
+        }
+
+        .item:visited {
+          color: blue;
         }
 
         h3 {
@@ -169,6 +177,10 @@ export function MemeTemplateGalleryList(props: MemeTemplateGalleryProps & { sear
 
         .cta {
           color: #aaa;
+        }
+
+        .item:hover .cta {
+          color: #777;
         }
 
         .filmstrip {

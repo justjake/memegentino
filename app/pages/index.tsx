@@ -7,6 +7,8 @@ import { WorkspacePicker, WorkspaceValue } from "app/core/components/WorkspacePi
 import { GetDatabaseResponse } from "@notionhq/client/build/src/api-endpoints"
 import { DatabasePicker, DatabaseValue } from "app/core/components/DatabasePicker"
 import { MemeTemplateGallery } from "app/core/components/MemeTemplateGallery"
+import { Spinner } from "app/core/components/Spinner"
+import { ErrorBoundary } from "app/core/components/ErrorBoundary"
 
 /*
  * This file is just for a pleasant getting started page for your new app.
@@ -104,27 +106,39 @@ const UserInfo = () => {
       </div>
       {workspace && (
         <div className="row">
-          <WorkspacePicker
-            onChange={setWorkspace}
-            value={workspace}
-            workspaces={currentUser.notionOAuthTokens}
-          />
+          <ErrorBoundary message="Error loading workspaces">
+            <Suspense fallback={<Spinner alt="Loading workspaces..." fullWidth />}>
+              <WorkspacePicker
+                onChange={setWorkspace}
+                value={workspace}
+                workspaces={currentUser.notionOAuthTokens}
+              />
+            </Suspense>
+          </ErrorBoundary>
         </div>
       )}
       {workspace && (
         <div className="row">
-          <DatabasePicker
-            key={workspace.bot_id}
-            workspace={workspace}
-            value={database}
-            onChange={setDatabase}
-          />
+          <ErrorBoundary message="Error loading databases">
+            <Suspense fallback={<Spinner alt="Loading workspaces..." fullWidth />}>
+              <DatabasePicker
+                key={workspace.bot_id}
+                workspace={workspace}
+                value={database}
+                onChange={setDatabase}
+              />
+            </Suspense>
+          </ErrorBoundary>
         </div>
       )}
 
       {database && workspace && (
         <div className="row">
-          <MemeTemplateGallery key={database.id} database={database} workspace={workspace} />
+          <ErrorBoundary message="Error loading rows from database">
+            <Suspense fallback={<Spinner alt="Loading memes..." fullWidth />}>
+              <MemeTemplateGallery key={database.id} database={database} workspace={workspace} />
+            </Suspense>
+          </ErrorBoundary>
         </div>
       )}
       <style jsx>{`
@@ -142,7 +156,7 @@ const UserInfo = () => {
 
 const Home: BlitzPage = () => {
   return (
-    <Suspense fallback="Loading...">
+    <Suspense fallback={<Spinner alt="Loading..." fullWidth />}>
       <UserInfo />
     </Suspense>
   )

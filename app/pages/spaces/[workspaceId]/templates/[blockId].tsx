@@ -219,7 +219,7 @@ function MemePreview(props: { src: string }) {
   return (
     <div>
       <div className="preview" ref={preview}>
-        <img src={props.src} />
+        <img src={props.src} alt="meme template image" />
         <div className="top-text">{topText}</div>
         <div className="bottom-text">{bottomText}</div>
       </div>
@@ -233,7 +233,9 @@ function MemePreview(props: { src: string }) {
           position: relative;
           width: 100%;
           border: 1px solid black;
-          border-radius: 5px;
+           {
+            /* border-radius: 5px; */
+          }
           overflow: hidden;
         }
 
