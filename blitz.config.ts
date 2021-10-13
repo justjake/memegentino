@@ -5,6 +5,8 @@ const config: BlitzConfig = {
     sessionMiddleware({
       cookiePrefix: "memegentino",
       isAuthorized: simpleRolesIsAuthorized,
+      // Important: sameSite must be disabled for us to work in an iframe
+      // such as a Notion embed block.
       sameSite: process.env.NODE_ENV === "production" ? "none" : undefined,
     }),
   ],
