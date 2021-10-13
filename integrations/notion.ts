@@ -237,10 +237,14 @@ const CLIENT_EXPIRY_WINDOW = 0
 
 const NotionFileUrlCache = new Map<string, CachedNotionFile>()
 
-export function getStableNotionFileUrl(notionFile: CachedNotionFile): string {
-  const url = new URL(notionFile.url)
+export function getStableNotionFileKey(urlString: string): string {
+  const url = new URL(urlString)
   url.search = ""
-  const key = url.toString()
+  return url.toString()
+}
+
+export function getStableNotionFileUrl(notionFile: CachedNotionFile): string {
+  const key = getStableNotionFileKey(notionFile.url)
   const cached = NotionFileUrlCache.get(key)
   const expiryWindow = process.browser ? CLIENT_EXPIRY_WINDOW : SERVER_EXPIRY_WINDOW
   if (cached && cached.expiresTs > Date.now() + expiryWindow) {

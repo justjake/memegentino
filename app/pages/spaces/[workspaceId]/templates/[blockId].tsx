@@ -24,6 +24,8 @@ import { useForm, useFormState } from "react-final-form"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { z } from "zod"
 import html2canvas from "html2canvas"
+import { getStableNotionFileKey } from "integrations/notion"
+import { ErrorView } from "app/core/components/ErrorBoundary"
 
 interface ShowTemplateProps {
   tokenId: string
@@ -97,7 +99,7 @@ export const getServerSideProps: GetServerSideProps<
       const buffer = Buffer.from(arrayBuffer)
       const base64 = buffer.toString("base64")
 
-      fileMap[file.url] = `data:${contentType};base64,${base64}`
+      fileMap[getStableNotionFileKey(file.url)] = `data:${contentType};base64,${base64}`
     })
   )
 
@@ -164,7 +166,10 @@ const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId, images }) =>
         />
 
         {files.map((file) => {
-          const image = images[file.url] || file.url
+          const image = images[getStableNotionFileKey(file.url)]
+          if (!image) {
+            return <ErrorView message={"Failed to load base64 image content"} />
+          }
           return <MemePreview key={file.url} src={image} />
         })}
       </Form>
