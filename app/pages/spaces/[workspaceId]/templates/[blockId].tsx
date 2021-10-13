@@ -86,8 +86,9 @@ export const getServerSideProps: GetServerSideProps<
       // const { signal } = controller
 
       const res = await fetch(file.url /*{ signal }*/)
-      const contentType = res.headers.get("Content-Type")
-      if (!contentType || !contentType.startsWith("image/")) {
+      const contentType = res.headers.get("Content-Type") || ""
+      const isImage = contentType.startsWith("image/") || file.url.match(/\.(png|jpe?g|heic|gif)/)
+      if (!isImage) {
         // controller.abort()
         return
       }
