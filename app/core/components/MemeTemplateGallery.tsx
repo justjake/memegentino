@@ -91,7 +91,7 @@ export function MemeTemplateGalleryList(props: MemeTemplateGalleryProps & { sear
         sorts: [
           {
             direction: "descending",
-            timestamp: "created_time",
+            timestamp: "last_edited_time",
           },
         ],
       }
