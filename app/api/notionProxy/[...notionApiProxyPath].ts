@@ -62,12 +62,13 @@ function notionApiProxy(args: {
       authenticateClientOptions(req, res, resolve)
     )
 
-    const parsed = new URL(url)
+    const parsed = new URL(url, "http://example.com")
+    parsed.pathname = parsed.pathname.split("/v1/").slice(1).join("/v1/")
     if (removeRouteQueryParam) {
       parsed.searchParams.delete(removeRouteQueryParam)
     }
+    const path = parsed.pathname + parsed.search
 
-    let path = parsed.toString().split("/v1/").slice(1).join("/v1/")
     const client = new NotionApiClient(clientOptions)
 
     try {
