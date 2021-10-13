@@ -4,6 +4,7 @@ import React, { ReactNode, Suspense, useEffect, useMemo, useState } from "react"
 import { useQuery } from "react-query"
 import { WorkspaceValue } from "./WorkspacePicker"
 import { PickerCheck, PickerRow, RecordIcon } from "./RecordIcon"
+import { Spinner } from "./Spinner"
 
 export type DatabaseValue = Pick<
   GetDatabaseResponse,
@@ -101,12 +102,19 @@ export function PickerSearchInput(props: {
   value: string
   placeholder?: string
   onChange(newValue: string): void
+  onReload?(): void
+  isLoading?: boolean
   label: ReactNode
 }) {
   return (
     <label>
       <div>{props.label}</div>
       <input type="search" value={props.value} onChange={(e) => props.onChange(e.target.value)} />
+      {props.onReload && (
+        <button className="button small">
+          {props.isLoading ? <Spinner alt="loading" /> : "Reload"}
+        </button>
+      )}
       <style jsx>
         {`
           label {

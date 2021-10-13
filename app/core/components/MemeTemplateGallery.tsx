@@ -4,7 +4,7 @@ import {
 } from "@notionhq/client/build/src/api-endpoints"
 import { getStableNotionFileUrl, notionClientProxy } from "integrations/notion"
 import { useQuery } from "react-query"
-import React, { Suspense, useState } from "react"
+import React, { Suspense, useCallback, useState } from "react"
 import { plainText, DatabaseValue, PickerSearchInput } from "./DatabasePicker"
 import { WorkspaceValue } from "./WorkspacePicker"
 import { Link, Routes, Image } from "blitz"
@@ -215,14 +215,21 @@ export function MemeTemplateGalleryList(props: MemeTemplateGalleryProps & { sear
 }
 
 export function MemeTemplateGallery(props: MemeTemplateGalleryProps) {
+  const [reload, setReload] = useState(0)
   const [search, setSearch] = useState("")
+  // const handleReload = useCallback(() => setReload(Date.now()))
 
   return (
     <div className="gallery">
-      <PickerSearchInput label="Filter templates" value={search} onChange={setSearch} />
+      <PickerSearchInput
+        label="Filter templates"
+        value={search}
+        onChange={setSearch}
+        // onReload={handleReload}
+      />
 
       <Suspense fallback={null}>
-        <MemeTemplateGalleryList search={search} {...props} />
+        <MemeTemplateGalleryList key={reload} search={search} {...props} />
       </Suspense>
 
       <style jsx>{`

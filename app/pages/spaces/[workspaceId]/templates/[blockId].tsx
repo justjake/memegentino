@@ -115,11 +115,11 @@ const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId, images }) =>
 
   return (
     <>
-      <div>
+      <p>
         <Link href="/">
           <a className="button small">{"<<"} Back</a>
         </Link>
-      </div>
+      </p>
       <h1>
         {row.icon && (
           <RecordIcon

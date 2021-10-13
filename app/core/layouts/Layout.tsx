@@ -47,7 +47,7 @@ const Layout = ({ title, children }: LayoutProps) => {
           }
 
           main {
-            padding: 5rem 12px;
+            padding: 8px 12px;
             min-width: 512px;
             display: flex;
             max-width: 1024px;
