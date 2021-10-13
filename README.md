@@ -1,10 +1,28 @@
-[![Blitz.js](https://raw.githubusercontent.com/blitz-js/art/master/github-cover-photo.png)](https://blitzjs.com)
-
-This is a [Blitz.js](https://github.com/blitz-js/blitz) app.
-
 # **memegentino**
 
+A simple meme generator that can produce memes from a Notion database of meme
+templates. Uses the Notion OAuth API to connect to your Notion workspaces. Embed
+it in an iframe for easy memeing from Notion.
+
+![screenshot of how Notion uses Memegentino](./screenshot.png)
+
 ## Getting Started
+
+You will need:
+
+- A postgres database, perhaps from [Supabase](https://supabase.io/)
+- A [Notion integration](https://developers.notion.com/docs/getting-started) configured as a [public OAuth integration](https://developers.notion.com/docs/authorization#authorizing-public-integrations)
+
+Ensure the `.env.local` file has required environment variables:
+
+```
+NOTION_BASE_URL=https://api.notion.com
+NOTION_CLIENT_ID=<uuid of your notion integration>
+NOTION_CLIENT_SECRET=<secret of your notion integration>
+DATABASE_URL=postgresql://<YOUR_DB_USERNAME>@localhost:5432/memegentino
+```
+
+## Development
 
 Run your app in the development mode.
 
@@ -14,47 +32,40 @@ blitz dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Environment Variables
+## Production
 
-Ensure the `.env.local` file has required environment variables:
+For preview and production environments, you additionally should configure
+`NEXT_PUBLIC_BASE_URL` to be the HTTP URL prefix for your app, this defaults to
+`http://localhost:3000`. This is used for Notion OAuth redirects.
 
-```
-DATABASE_URL=postgresql://<YOUR_DB_USERNAME>@localhost:5432/memegentino
-```
-
-Ensure the `.env.test.local` file has required environment variables:
-
-```
-DATABASE_URL=postgresql://<YOUR_DB_USERNAME>@localhost:5432/memegentino_test
-```
-
-## Tests
-
-Runs your tests using Jest.
+Note that if you're using Supabase, you should use the PGBouncer URL in _preview_ and
+_production_ environments with `?pgbouncer=true`.
 
 ```
-yarn test
+...
+NEXT_PUBLIC_BASE_URL=https://<my-app-name>.com
+DATABASE_URL=postgres://<USER:PASS>@db.<SUPABASE>.supabase.co:6543/postgres?pgbouncer=true
 ```
-
-Blitz comes with a test setup using [Jest](https://jestjs.io/) and [react-testing-library](https://testing-library.com/).
 
 ## Commands
 
 Blitz comes with a powerful CLI that is designed to make development easy and fast. You can install it with `npm i -g blitz`
 
 ```
-  blitz [COMMAND]
 
-  dev       Start a development server
-  build     Create a production build
-  start     Start a production server
-  export    Export your Blitz app as a static application
-  prisma    Run prisma commands
-  generate  Generate new files for your Blitz project
-  console   Run the Blitz console REPL
-  install   Install a recipe
-  help      Display help for blitz
-  test      Run project tests
+blitz [COMMAND]
+
+dev Start a development server
+build Create a production build
+start Start a production server
+export Export your Blitz app as a static application
+prisma Run prisma commands
+generate Generate new files for your Blitz project
+console Run the Blitz console REPL
+install Install a recipe
+help Display help for blitz
+test Run project tests
+
 ```
 
 You can read more about it on the [CLI Overview](https://blitzjs.com/docs/cli-overview) documentation.
@@ -64,28 +75,13 @@ You can read more about it on the [CLI Overview](https://blitzjs.com/docs/cli-ov
 Here is the starting structure of your app.
 
 ```
+
 memegentino
 ├── app/
 │   ├── api/
 │   ├── auth/
-│   │   ├── components/
-│   │   │   ├── LoginForm.tsx
-│   │   │   └── SignupForm.tsx
 │   │   ├── mutations/
-│   │   │   ├── changePassword.ts
-│   │   │   ├── forgotPassword.test.ts
-│   │   │   ├── forgotPassword.ts
-│   │   │   ├── login.ts
-│   │   │   ├── logout.ts
-│   │   │   ├── resetPassword.test.ts
-│   │   │   ├── resetPassword.ts
-│   │   │   └── signup.ts
-│   │   ├── pages/
-│   │   │   ├── forgot-password.tsx
-│   │   │   ├── login.tsx
-│   │   │   ├── reset-password.tsx
-│   │   │   └── signup.tsx
-│   │   └── validations.ts
+│   │   │   └── logout.ts
 │   ├── core/
 │   │   ├── components/
 │   │   │   ├── Form.tsx
@@ -93,16 +89,16 @@ memegentino
 │   │   ├── hooks/
 │   │   │   └── useCurrentUser.ts
 │   │   └── layouts/
-│   │       └── Layout.tsx
+│   │   └── Layout.tsx
 │   ├── pages/
 │   │   ├── 404.tsx
-│   │   ├── _app.tsx
-│   │   ├── _document.tsx
+│   │   ├── \_app.tsx
+│   │   ├── \_document.tsx
 │   │   ├── index.test.tsx
 │   │   └── index.tsx
 │   └── users/
-│       └── queries/
-│           └── getCurrentUser.ts
+│   └── queries/
+│   └── getCurrentUser.ts
 ├── db/
 │   ├── index.ts
 │   ├── schema.prisma
@@ -111,7 +107,7 @@ memegentino
 ├── mailers/
 │   └── forgotPasswordMailer.ts
 ├── public/
-│   ├── favicon.ico*
+│   ├── favicon.ico\*
 │   └── logo.png
 ├── test/
 │   ├── setup.ts
@@ -125,6 +121,7 @@ memegentino
 ├── types.d.ts
 ├── types.ts
 └── yarn.lock
+
 ```
 
 These files are:
@@ -171,3 +168,7 @@ The Blitz community is warm, safe, diverse, inclusive, and fun! Feel free to rea
 - [Forum discussions](https://github.com/blitz-js/blitz/discussions)
 - [How to Contribute](https://blitzjs.com/docs/contributing)
 - [Sponsor or donate](https://github.com/blitz-js/blitz#sponsors-and-donations)
+
+```
+
+```
