@@ -231,6 +231,7 @@ function MemePreview(props: { src: string }) {
       </div>
       <style jsx>{`
         .preview {
+          text-align: center;
           position: relative;
           width: 100%;
           border: 1px solid black;
@@ -245,7 +246,9 @@ function MemePreview(props: { src: string }) {
         }
 
         img {
-          max-height: 50vh;
+           {
+            /* max-height: 50vh; */
+          }
           max-width: 100%;
           margin-bottom: -5px;
         }
