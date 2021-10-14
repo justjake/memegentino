@@ -5,7 +5,7 @@ export function Spinner(props: { alt: string; fullWidth?: boolean }) {
   return (
     <>
       <div className={className}>
-        <div className="loader">{alt}</div>
+        <div className="loader" title={alt} />
       </div>
       <style jsx>{`
         .inline {

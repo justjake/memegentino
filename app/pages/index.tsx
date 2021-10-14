@@ -1,6 +1,6 @@
 import React, { Suspense, useCallback, useEffect, useState } from "react"
 import { Image, Link, BlitzPage, useMutation, Routes } from "blitz"
-import Layout from "app/core/layouts/Layout"
+import Layout, { ActionRow } from "app/core/layouts/Layout"
 import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import logout from "app/auth/mutations/logout"
 import { WorkspacePicker, WorkspaceValue } from "app/core/components/WorkspacePicker"
@@ -9,11 +9,6 @@ import { DatabasePicker, DatabaseValue } from "app/core/components/DatabasePicke
 import { MemeTemplateGallery } from "app/core/components/MemeTemplateGallery"
 import { Spinner } from "app/core/components/Spinner"
 import { ErrorBoundary } from "app/core/components/ErrorBoundary"
-
-/*
- * This file is just for a pleasant getting started page for your new app.
- * You can delete everything in here and start from scratch if you like.
- */
 
 interface EmptyState {
   workspace?: undefined
@@ -84,26 +79,33 @@ const UserInfo = () => {
 
   return (
     <>
-      <div className="row">
-        <div>
-          {currentUser.name}
-          <br />
-          {currentUser.email}
-        </div>
-        <div>
-          <a href="/api/auth/notion" className="button small">
-            Add Workspace
-          </a>
-          <button
-            className="button small"
-            onClick={async () => {
-              await logoutMutation()
-            }}
-          >
-            Logout
-          </button>
-        </div>
-      </div>
+      <ActionRow
+        left={
+          <div>
+            {currentUser.name}
+            <br />
+            {currentUser.email}
+          </div>
+        }
+        right={
+          <div>
+            <Link href={Routes.ListMemes()}>
+              <a className="button small">Your Memes</a>
+            </Link>
+            <a href="/api/auth/notion" className="button small">
+              Add Workspace
+            </a>
+            <button
+              className="button small"
+              onClick={async () => {
+                await logoutMutation()
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        }
+      />
       {workspace && (
         <div className="row">
           <ErrorBoundary message="Error loading workspaces">
@@ -144,10 +146,9 @@ const UserInfo = () => {
       <style jsx>{`
         .row {
           display: flex;
+          flex: 1;
           justify-content: space-between;
-          width: 50vw;
-          min-width: 480px;
-          margin: 14px 0;
+          margin: 12px 0;
         }
       `}</style>
     </>
@@ -163,6 +164,6 @@ const Home: BlitzPage = () => {
 }
 
 Home.suppressFirstRenderFlicker = true
-Home.getLayout = (page) => <Layout title="Home">{page}</Layout>
+Home.getLayout = (page) => <Layout title="Memegentino">{page}</Layout>
 
 export default Home

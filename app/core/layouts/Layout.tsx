@@ -1,5 +1,6 @@
-import { ReactNode } from "react"
+import { ReactNode, Suspense } from "react"
 import { Head } from "blitz"
+import { Spinner } from "../components/Spinner"
 
 type LayoutProps = {
   title?: string
@@ -15,7 +16,15 @@ const Layout = ({ title, children }: LayoutProps) => {
       </Head>
 
       <div className="container">
-        <main>{children}</main>
+        <Suspense
+          fallback={
+            <div className="loading">
+              <Spinner fullWidth alt={`Loading "${title}"`} />
+            </div>
+          }
+        >
+          <main>{children}</main>
+        </Suspense>
 
         <style jsx global>{`
           html,
@@ -46,13 +55,20 @@ const Layout = ({ title, children }: LayoutProps) => {
             }
           }
 
+          .loading {
+            min-height: 50vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
           main {
             padding: 8px 12px;
             min-width: 512px;
             display: flex;
-            max-width: 1024px;
+            width: 800px;
+            max-width: 100%;
             flex-direction: column;
-            min-height: 50vh;
           }
 
           .buttons {
@@ -82,6 +98,12 @@ const Layout = ({ title, children }: LayoutProps) => {
             padding: 0.5rem 1rem;
           }
 
+          .button:disabled,
+          .button:disabled:hover {
+            background: transparent;
+            border: 1px solid #eee;
+          }
+
           .button:hover {
             background-color: rgba(0, 0, 0, 0.15);
             mix-blend-mode: color-burn;
@@ -101,6 +123,30 @@ const Layout = ({ title, children }: LayoutProps) => {
         `}</style>
       </div>
     </>
+  )
+}
+
+export function ActionRow(props: { left?: ReactNode; right?: ReactNode }) {
+  return (
+    <div>
+      {props.left}
+
+      <div className="spacer" />
+
+      {props.right}
+      <style jsx>{`
+        div {
+          display: flex;
+          flex: 1;
+          margin: 12px 0;
+          align-items: center;
+        }
+
+        .spacer {
+          flex-grow: 1;
+        }
+      `}</style>
+    </div>
   )
 }
 

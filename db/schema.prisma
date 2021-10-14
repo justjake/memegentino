@@ -96,6 +96,8 @@ model Meme {
   // Blob storage in the DB 🤷
   mimeType String
   data     Bytes
+  widthPx  Int?
+  heightPx Int?
 
   allowPublic        Boolean? // anyone on the internet can view
   allowWorkspace     Boolean? // only people logged in with the same workspace can view

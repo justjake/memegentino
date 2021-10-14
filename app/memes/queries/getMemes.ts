@@ -1,7 +1,7 @@
 import { paginate, resolver } from "blitz"
 import db, { MemeDefaultFields, Prisma } from "db"
 
-interface GetMemesInput
+export interface GetMemesInput
   extends Pick<Prisma.MemeFindManyArgs, "where" | "orderBy" | "skip" | "take"> {}
 
 export default resolver.pipe(

@@ -5,6 +5,17 @@ import { Strategy } from "passport-strategy"
 import https from "https"
 import { GetUserResponse } from "@notionhq/client/build/src/api-endpoints"
 import { getAntiCSRFToken } from "next/data-client"
+import { NotionOAuthToken as DBOAuthToken } from "db"
+import { env } from "./unix"
+
+export { NotionClient }
+
+export function serverNotionClient(token: DBOAuthToken) {
+  return new NotionClient({
+    baseUrl: env("NOTION_BASE_URL"),
+    auth: token.access_token,
+  })
+}
 
 export interface NotionOAuthToken {
   access_token: string
@@ -238,9 +249,14 @@ const CLIENT_EXPIRY_WINDOW = 0
 const NotionFileUrlCache = new Map<string, CachedNotionFile>()
 
 export function getStableNotionFileKey(urlString: string): string {
-  const url = new URL(urlString)
-  url.search = ""
-  return url.toString()
+  try {
+    const url = new URL(urlString)
+    url.search = ""
+    return url.toString()
+  } catch (error) {
+    console.error("not a url:", urlString)
+    throw error
+  }
 }
 
 export function getStableNotionFileUrl(notionFile: CachedNotionFile): string {

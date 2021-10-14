@@ -15,6 +15,9 @@ export const CreateMeme = z.object({
   bottomText: z.string().optional(),
   effects: z.string().optional(),
 
+  widthPx: z.number().int(),
+  heightPx: z.number().int(),
+
   allowPublic: z.boolean().optional(), // anyone on the internet can view
   allowWorkspace: z.boolean().optional(), // only people logged in with the same workspace can view
   allowBySourceBlock: z.boolean().optional(), // OK if the reader is in the workspace and can read the source block

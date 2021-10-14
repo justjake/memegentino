@@ -3,7 +3,7 @@ import {
   DatabaseRowValue,
   findAllFiles,
 } from "app/core/components/MemeTemplateGallery"
-import Layout from "app/core/layouts/Layout"
+import Layout, { ActionRow } from "app/core/layouts/Layout"
 import {
   Link,
   BlitzPage,
@@ -12,6 +12,9 @@ import {
   getSession,
   useMutation,
   GetServerSidePropsResult,
+  useParam,
+  useQuery,
+  Routes,
 } from "blitz"
 import db, { NotionOAuthTokenDefaultFields } from "db"
 import { Client as NotionClient } from "@notionhq/client"
@@ -24,13 +27,15 @@ import { useForm, useFormState } from "react-final-form"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { z } from "zod"
 import html2canvas from "html2canvas"
-import { getStableNotionFileKey } from "integrations/notion"
+import { getStableNotionFileKey, getStableNotionFileUrl } from "integrations/notion"
 import { ErrorView } from "app/core/components/ErrorBoundary"
+import getTemplateImagesAsBase64 from "app/templates/queries/getTemplateImagesAsBase64"
+import { Spinner } from "app/core/components/Spinner"
+import router from "next/router"
 
 interface ShowTemplateProps {
   tokenId: string
   row: DatabaseRowValue
-  images: Record<string, string>
 }
 
 export const getServerSideProps: GetServerSideProps<
@@ -79,50 +84,37 @@ export const getServerSideProps: GetServerSideProps<
     page_id: blockId,
   })
 
-  const files = findAllFiles(page)
-  const fileMap: Record<string, string> = {}
-
-  await Promise.all(
-    files.map(async (file) => {
-      // const controller = new AbortController()
-      // const { signal } = controller
-
-      const res = await fetch(file.url /*{ signal }*/)
-      const contentType = res.headers.get("Content-Type") || ""
-      const isImage = contentType.startsWith("image/") || file.url.match(/\.(png|jpe?g|heic|gif)/)
-      if (!isImage) {
-        // controller.abort()
-        return
-      }
-
-      const arrayBuffer = await res.arrayBuffer()
-      const buffer = Buffer.from(arrayBuffer)
-      const base64 = buffer.toString("base64")
-
-      fileMap[getStableNotionFileKey(file.url)] = `data:${contentType};base64,${base64}`
-    })
-  )
-
   return {
     props: {
-      images: fileMap,
       tokenId: token.bot_id,
       row: page,
     },
   }
 }
 
-const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId, images }) => {
+const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId }) => {
   const files = findAllFiles(row)
+  const [filesBase64] = useQuery(
+    getTemplateImagesAsBase64,
+    {
+      workspaceId: useParam("workspaceId", "string") as string,
+      blockId: useParam("blockId", "string") as string,
+    },
+    {
+      suspense: false,
+    }
+  )
   const [createMutation] = useMutation(createMeme)
 
   return (
     <>
-      <p>
-        <Link href="/">
-          <a className="button small">{"<<"} Back</a>
-        </Link>
-      </p>
+      <ActionRow
+        left={
+          <Link href="/">
+            <a className="button small">{"<<"} Home</a>
+          </Link>
+        }
+      />
       <h1>
         {row.icon && (
           <RecordIcon
@@ -148,7 +140,7 @@ const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId, images }) =>
           console.warn("onSubmit", values)
           try {
             const meme = await createMutation(values)
-            window.location.href = `/api/meme/${meme.id}`
+            router.push(Routes.ShowMeme({ memeId: meme.id }))
           } catch (error) {
             console.error("form error", error)
             return {
@@ -166,11 +158,11 @@ const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId, images }) =>
         />
 
         {files.map((file) => {
-          const image = images[getStableNotionFileKey(file.url)]
+          const image = filesBase64 ? filesBase64[getStableNotionFileKey(file.url)] : file.url
           if (!image) {
             return <ErrorView message={"Failed to load base64 image content"} />
           }
-          return <MemePreview key={file.url} src={image} />
+          return <MemePreview ready={Boolean(filesBase64)} key={file.url} src={image} />
         })}
       </Form>
     </>
@@ -178,10 +170,11 @@ const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId, images }) =>
 }
 ShowTemplate.getLayout = (page) => <Layout title="Meme workshoppe">{page}</Layout>
 
-function MemePreview(props: { src: string }) {
+function MemePreview(props: { ready: boolean; src: string }) {
   const form = useForm<z.infer<typeof CreateMeme>>()
   const preview = useRef<HTMLDivElement>(null)
   const [, rerender] = useState({})
+  const ready = props.ready
 
   useEffect(() => {
     return form.subscribe(
@@ -197,30 +190,42 @@ function MemePreview(props: { src: string }) {
 
   const inscribe = useCallback(
     async (e: any) => {
+      if (!ready) {
+        return
+      }
+
       if (e.preventDefault) {
         e.preventDefault()
       }
       if (!preview.current) {
         return
       }
-      const canvas = await html2canvas(preview.current)
+      const canvas = await html2canvas(preview.current, {
+        scale: 1,
+      })
+      const width = Math.floor(canvas.width)
+      const height = Math.floor(canvas.height)
       const mimeType = props.src.includes("image/png") ? "image/png" : "image/jpeg"
       const base64 = canvas.toDataURL(mimeType).split("base64,")[1]
 
       form.batch(() => {
+        form.change("widthPx", width)
+        form.change("heightPx", height)
         form.change("dataBase64", base64)
         form.change("mimeType", mimeType)
       })
 
       form.submit()
     },
-    [form]
+    [form, ready]
   )
 
   const topText = form.getFieldState("topText")?.value || ""
   const bottomText = form.getFieldState("bottomText")?.value || ""
 
   const textShadow = Array(10).fill("0px 0px 3px black").join(",")
+
+  const buttonText = ready ? "Inscribe this meme... forever" : "Reticulating splines..."
 
   return (
     <div>
@@ -230,8 +235,13 @@ function MemePreview(props: { src: string }) {
         <div className="bottom-text">{bottomText}</div>
       </div>
       <div className="happening">
-        <button className="button" onClick={inscribe}>
-          Inscribe this meme... forever.
+        <button className="button" disabled={!ready} onClick={inscribe}>
+          {buttonText}
+          {!ready && (
+            <span style={{ marginLeft: 12 }}>
+              <Spinner alt="Waiting for image to load" />
+            </span>
+          )}
         </button>
       </div>
       <style jsx>{`
