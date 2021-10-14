@@ -1,5 +1,5 @@
 import { enhancePrisma } from "blitz"
-import { Prisma, PrismaClient } from "@prisma/client"
+import { Meme, Prisma, PrismaClient } from "@prisma/client"
 
 const EnhancedPrisma = enhancePrisma(PrismaClient)
 
@@ -28,6 +28,8 @@ export const MemeDefaultFields = {
   widthPx: true,
   heightPx: true,
 } as const
+
+export type DefaultMeme = Pick<Meme, keyof typeof MemeDefaultFields>
 
 export * from "@prisma/client"
 export default new EnhancedPrisma()

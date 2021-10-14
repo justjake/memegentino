@@ -6,11 +6,13 @@ export interface GetMemesInput
 
 export default resolver.pipe(
   resolver.authorize(),
-  async ({ where: givenWhere, orderBy, skip = 0, take = 100 }: GetMemesInput, ctx) => {
+  async ({ where: givenWhere = {}, orderBy, skip = 0, take = 100 }: GetMemesInput, ctx) => {
     const { userId } = ctx.session
 
+    const { OR, ...safeWhere } = givenWhere
+
     const where: Prisma.MemeWhereInput = {
-      ...givenWhere,
+      ...safeWhere,
       createdByUserId: userId,
     }
 

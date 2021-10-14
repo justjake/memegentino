@@ -1,5 +1,5 @@
 import { resolver, NotFoundError } from "blitz"
-import db, { MemeDefaultFields } from "db"
+import db, { DefaultMeme, Meme, MemeDefaultFields, prisma, Prisma } from "db"
 import { z } from "zod"
 
 const GetMeme = z.object({
@@ -8,7 +8,7 @@ const GetMeme = z.object({
 
 export default resolver.pipe(resolver.zod(GetMeme), resolver.authorize(), async ({ id }, ctx) => {
   // TODO: in multi-tenant app, you must add validation to ensure correct tenant
-  const meme = await db.meme.findFirst({
+  const meme: DefaultMeme | null = await db.meme.findFirst({
     where: { id, createdByUserId: ctx.session.userId },
     select: MemeDefaultFields,
   })
