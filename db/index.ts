@@ -25,6 +25,8 @@ export const MemeDefaultFields = {
   allowPublic: true,
   allowWorkspace: true,
   mimeType: true,
+  widthPx: true,
+  heightPx: true,
 } as const
 
 export * from "@prisma/client"
