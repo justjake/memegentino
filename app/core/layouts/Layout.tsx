@@ -11,7 +11,7 @@ const Layout = ({ title, children }: LayoutProps) => {
   return (
     <>
       <Head>
-        <title>{title || "memegentino"}</title>
+        <title>{title || "Memegentino"}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
