@@ -63,15 +63,20 @@ model Token {
 }
 
 model NotionOAuthToken {
+  // Ours
+  userId    Int
+  User      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  // Notion provided
   bot_id         String  @id // @db.uuid
-  userId         Int
   workspace_id   String
   workspace_name String?
   workspace_icon String?
   access_token   String
   token_type     String // not really needed, but makes it easier to save the API response directly.
   owner          String // Json
-  User           User    @relation(fields: [userId], references: [id])
 
   GeneratedImage Meme[]
   @@unique([workspace_id, userId])

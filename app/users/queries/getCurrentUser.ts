@@ -13,6 +13,9 @@ export default async function getCurrentUser(_ = null, { session }: Ctx) {
       role: true,
       notionOAuthTokens: {
         select: NotionOAuthTokenDefaultFields,
+        orderBy: {
+          updatedAt: "desc",
+        },
       },
     },
   })
