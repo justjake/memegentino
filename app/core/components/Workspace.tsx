@@ -1,11 +1,11 @@
-import { notionClientProxy } from "integrations/notion"
+import { notionClientBrowser } from "integrations/notion"
 import { useQuery } from "react-query"
 import { useMemo } from "react"
 
 export function Workspace(props: { workspace_id: string; workspace_name: string | null }) {
   const { workspace_name, workspace_id } = props
   const databases = useQuery(`workspace:${workspace_id}`, () =>
-    notionClientProxy(workspace_id).search({
+    notionClientBrowser(workspace_id).search({
       filter: {
         property: "object",
         value: "database",

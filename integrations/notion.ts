@@ -10,10 +10,29 @@ import { env } from "./unix"
 
 export { NotionClient }
 
-export function serverNotionClient(token: DBOAuthToken) {
+export function notionClientServer(token: DBOAuthToken) {
   return new NotionClient({
     baseUrl: env("NOTION_BASE_URL"),
     auth: token.access_token,
+  })
+}
+
+export function notionClientBrowser(workspaceId: string): NotionClient {
+  const baseUrl = new URL("/api/notionProxy", window.location.href).toString()
+  return new NotionClient({
+    baseUrl,
+    auth: `workspace_id:${workspaceId}`,
+    fetch(url, init) {
+      const { headers, ...rest } = init || {}
+      return fetch(url, {
+        ...rest,
+        credentials: "include",
+        headers: {
+          ...headers,
+          "anti-csrf": getAntiCSRFToken(),
+        },
+      })
+    },
   })
 }
 
@@ -217,25 +236,6 @@ export function getPersonUser(user: notionApiTypes.GetUserResponse): NotionPerso
   }
 
   throw new Error(`Notion user object has unknown type: ${(user as any).type}`)
-}
-
-export function notionClientProxy(workspaceId: string): NotionClient {
-  const baseUrl = new URL("/api/notionProxy", window.location.href).toString()
-  return new NotionClient({
-    baseUrl,
-    auth: `workspace_id:${workspaceId}`,
-    fetch(url, init) {
-      const { headers, ...rest } = init || {}
-      return fetch(url, {
-        ...rest,
-        credentials: "include",
-        headers: {
-          ...headers,
-          "anti-csrf": getAntiCSRFToken(),
-        },
-      })
-    },
-  })
 }
 
 interface CachedNotionFile {

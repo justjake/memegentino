@@ -1,7 +1,7 @@
 import { findAllFiles } from "app/core/components/MemeTemplateGallery"
-import { resolver, NotFoundError, AuthorizationError } from "blitz"
-import db, { MemeDefaultFields } from "db"
-import { getStableNotionFileKey, serverNotionClient } from "integrations/notion"
+import { AuthorizationError, NotFoundError, resolver } from "blitz"
+import db from "db"
+import { getStableNotionFileKey, notionClientServer } from "integrations/notion"
 import { z } from "zod"
 
 const GetTemplate = z.object({
@@ -26,7 +26,7 @@ export default resolver.pipe(
       throw new AuthorizationError()
     }
 
-    const notion = serverNotionClient(notionToken)
+    const notion = notionClientServer(notionToken)
 
     const page = await notion.pages.retrieve({
       page_id: blockId,

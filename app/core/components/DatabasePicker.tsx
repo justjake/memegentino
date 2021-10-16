@@ -1,4 +1,9 @@
-import { DatabaseValue, notionClientProxy, plainText, resultIsDatabase } from "integrations/notion"
+import {
+  DatabaseValue,
+  notionClientBrowser,
+  plainText,
+  resultIsDatabase,
+} from "integrations/notion"
 import React, { ReactNode, Suspense, useEffect, useState } from "react"
 import { useQuery } from "react-query"
 import { PickerCheck, PickerRow, RecordIcon } from "./RecordIcon"
@@ -19,7 +24,7 @@ function DatabasePickerList(props: DatabasePickerProps & { search: string }) {
   const query = useQuery(
     ["databases", props.workspace.workspace_id, search],
     async () => {
-      const notion = notionClientProxy(props.workspace.workspace_id)
+      const notion = notionClientBrowser(props.workspace.workspace_id)
 
       if (USE_DATABASES_LIST) {
         const databases = await notion.databases.list({})

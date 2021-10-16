@@ -1,4 +1,5 @@
 import { Client as NotionClient } from "@notionhq/client"
+import { GetPageResponse } from "@notionhq/client/build/src/api-endpoints"
 import { ErrorView } from "app/core/components/ErrorBoundary"
 import Form, { FORM_ERROR } from "app/core/components/Form"
 import LabeledTextField from "app/core/components/LabeledTextField"
@@ -25,7 +26,7 @@ import {
 } from "blitz"
 import db from "db"
 import html2canvas from "html2canvas"
-import { getStableNotionFileKey } from "integrations/notion"
+import { getStableNotionFileKey, notionClientServer } from "integrations/notion"
 import { env } from "integrations/unix"
 import router from "next/router"
 import { useCallback, useEffect, useRef, useState } from "react"
@@ -74,19 +75,22 @@ export const getServerSideProps: GetServerSideProps<
     }
   }
 
-  const notion = new NotionClient({
-    baseUrl: env("NOTION_BASE_URL"),
-    auth: token.access_token,
-  })
-
-  const page = await notion.pages.retrieve({
-    page_id: blockId,
-  })
+  let row: GetPageResponse
+  if (typeof context.query.row === "string") {
+    // Some requests can have the row pre-populated, so we can avoid re-querying
+    // the Notion API.
+    row = JSON.parse(context.query.row)
+  } else {
+    const notion = notionClientServer(token)
+    row = await notion.pages.retrieve({
+      page_id: blockId,
+    })
+  }
 
   return {
     props: {
       tokenId: token.bot_id,
-      row: page,
+      row,
     },
   }
 }

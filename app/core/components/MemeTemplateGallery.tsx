@@ -6,7 +6,7 @@ import { Link, Routes } from "blitz"
 import {
   DatabaseValue,
   getStableNotionFileUrl,
-  notionClientProxy,
+  notionClientBrowser,
   plainText,
 } from "integrations/notion"
 import React, { Suspense, useState } from "react"
@@ -88,7 +88,7 @@ export function MemeTemplateGalleryList(props: MemeTemplateGalleryProps & { sear
   const query = useQuery(
     ["databasePages", workspace.bot_id, database.id, search],
     async () => {
-      const notion = notionClientProxy(workspace.workspace_id)
+      const notion = notionClientBrowser(workspace.workspace_id)
 
       const req: QueryDatabaseParameters = {
         database_id: database.id,
@@ -124,6 +124,7 @@ export function MemeTemplateGalleryList(props: MemeTemplateGalleryProps & { sear
       {query.data &&
         query.data.map((it) => {
           const files = findAllFiles(it).map((file) => {
+            // eslint-disable-next-line @next/next/no-img-element
             return <img key={file.url} src={file.url} alt={file.name} />
           })
 
@@ -137,7 +138,13 @@ export function MemeTemplateGalleryList(props: MemeTemplateGalleryProps & { sear
               href={Routes.ShowTemplate({
                 workspaceId: workspace.workspace_id,
                 blockId: it.id,
+                // Pass the row in a param so we don't have to re-load it from
+                // the Notion API, which can be slow.
+                row: JSON.stringify(it),
               })}
+              // For whatever reason, we can't use as=... with the Routes helper.
+              // It breaks cmd-click.
+              as={`/spaces/${workspace.workspace_id}/templates/${it.id}`}
             >
               <a className="item">
                 {databaseTitleProp && (

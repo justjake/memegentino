@@ -21,6 +21,12 @@ interface NotionErrorResponse {
 type NotionProxyErrorResponse = ProxyErrorResponse | NotionErrorResponse
 
 function notionApiProxy(args: {
+  /**
+   * Next may add an extra query param to the request's URL depending on the
+   * route used for your Notion API proxy. If your proxy API file is
+   * [...notionApiProxyPath]ts, this should be set to
+   * `removeRouteQueryParam: 'notionApiProxyPath'`
+   */
   removeRouteQueryParam?: string
   /**
    * Authenticate the request, and return the Notion client options to use for
