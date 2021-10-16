@@ -29,28 +29,35 @@ export function plainText(text: RichText): string {
   return text.map((it) => it.plain_text).join()
 }
 
+const USE_SEARCH_API = Boolean(process.env.NEXT_PUBLIC_USE_SEARCH_API)
+
 function DatabasePickerList(props: DatabasePickerProps & { search: string }) {
   const { search, value, onChange } = props
 
   const query = useQuery(
-    ["databases", props.workspace.bot_id, search],
+    ["databases", props.workspace.workspace_id, search],
     async () => {
       const notion = notionClientProxy(props.workspace.workspace_id)
-      // const results = await notion.data({
-      //   query: search === "" ? undefined : search,
-      //   // filter: {
-      //   //   property: "object",
-      //   //   value: "database"
-      //   // },
-      //   // sort: {
-      //   //   timestamp: "last_edited_time",
-      //   //   direction: "descending",
-      //   // },
-      // })
-      const databases = await notion.databases.list({})
-      return databases.results.filter(resultIsDatabase).filter((db) => {
-        return plainText(db.title).toLowerCase().includes(search)
+
+      if (!USE_SEARCH_API) {
+        const databases = await notion.databases.list({})
+        return databases.results.filter(resultIsDatabase).filter((db) => {
+          return plainText(db.title).toLowerCase().includes(search)
+        })
+      }
+
+      const results = await notion.search({
+        query: search === "" ? undefined : search,
+        filter: {
+          property: "object",
+          value: "database",
+        },
+        sort: {
+          timestamp: "last_edited_time",
+          direction: "descending",
+        },
       })
+      return results.results.filter(resultIsDatabase)
     },
     {
       keepPreviousData: true,
@@ -83,7 +90,10 @@ function DatabasePickerList(props: DatabasePickerProps & { search: string }) {
 
       {isEmpty && (
         <p>
-          No databases found. Please share your meme templates databases directly with this bot.
+          No databases found.
+          {USE_SEARCH_API
+            ? " Please share a meme templates database with this bot. It should have a File column containing images."
+            : " Please share your meme templates databases directly with this bot. It should have a File column containing images."}
         </p>
       )}
 

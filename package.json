@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "blitz dev",
     "build": "blitz build",
+    "deploy": "git push origin main:prod",
     "vercel-build": "./vercel-build.sh",
     "start": "blitz start",
     "studio": "blitz prisma studio",
