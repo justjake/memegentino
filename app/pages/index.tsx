@@ -1,14 +1,14 @@
-import React, { Suspense, useCallback, useEffect, useState } from "react"
-import { Image, Link, BlitzPage, useMutation, Routes } from "blitz"
-import Layout, { ActionRow } from "app/core/layouts/Layout"
-import { useCurrentUser } from "app/core/hooks/useCurrentUser"
 import logout from "app/auth/mutations/logout"
-import { WorkspacePicker, WorkspaceValue } from "app/core/components/WorkspacePicker"
-import { GetDatabaseResponse } from "@notionhq/client/build/src/api-endpoints"
-import { DatabasePicker, DatabaseValue } from "app/core/components/DatabasePicker"
+import { DatabasePicker } from "app/core/components/DatabasePicker"
+import { ErrorBoundary } from "app/core/components/ErrorBoundary"
 import { MemeTemplateGallery } from "app/core/components/MemeTemplateGallery"
 import { Spinner } from "app/core/components/Spinner"
-import { ErrorBoundary } from "app/core/components/ErrorBoundary"
+import { WorkspacePicker, WorkspaceValue } from "app/core/components/WorkspacePicker"
+import { useCurrentUser } from "app/core/hooks/useCurrentUser"
+import Layout, { ActionRow } from "app/core/layouts/Layout"
+import { BlitzPage, Link, Routes, useMutation } from "blitz"
+import { DatabaseValue } from "integrations/notion"
+import React, { Suspense, useCallback, useEffect, useState } from "react"
 
 interface EmptyState {
   workspace?: undefined

@@ -1,6 +1,5 @@
+import { DatabaseValue } from "integrations/notion"
 import { HTMLAttributes, ReactNode } from "react"
-import { DatabaseValue } from "./DatabasePicker"
-import { Image } from "blitz"
 
 export function PickerCheck(props: {}) {
   return (
