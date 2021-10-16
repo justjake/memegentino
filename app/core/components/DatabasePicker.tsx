@@ -29,7 +29,7 @@ export function plainText(text: RichText): string {
   return text.map((it) => it.plain_text).join()
 }
 
-const USE_SEARCH_API = Boolean(process.env.NEXT_PUBLIC_USE_SEARCH_API)
+const USE_DATABASES_LIST = Boolean(process.env.NEXT_PUBLIC_USE_DATABASES_LIST)
 
 function DatabasePickerList(props: DatabasePickerProps & { search: string }) {
   const { search, value, onChange } = props
@@ -39,7 +39,7 @@ function DatabasePickerList(props: DatabasePickerProps & { search: string }) {
     async () => {
       const notion = notionClientProxy(props.workspace.workspace_id)
 
-      if (!USE_SEARCH_API) {
+      if (USE_DATABASES_LIST) {
         const databases = await notion.databases.list({})
         return databases.results.filter(resultIsDatabase).filter((db) => {
           return plainText(db.title).toLowerCase().includes(search)
@@ -91,9 +91,9 @@ function DatabasePickerList(props: DatabasePickerProps & { search: string }) {
       {isEmpty && (
         <p>
           No databases found.
-          {USE_SEARCH_API
-            ? " Please share a meme templates database with this bot. It should have a File column containing images."
-            : " Please share your meme templates databases directly with this bot. It should have a File column containing images."}
+          {USE_DATABASES_LIST
+            ? " Please share your meme templates databases directly with this bot. It should have a File column containing images."
+            : " Please share a meme templates database with this bot. It should have a File column containing images."}
         </p>
       )}
 
