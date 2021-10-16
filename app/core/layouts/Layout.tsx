@@ -15,6 +15,8 @@ const Layout = ({ title, children }: LayoutProps) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
+      <div className="frame" />
+
       <div className="container">
         <Suspense
           fallback={
@@ -33,12 +35,25 @@ const Layout = ({ title, children }: LayoutProps) => {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu,
               Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+            background: white;
           }
 
           * {
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             box-sizing: border-box;
+          }
+
+          .frame {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            pointer-events: none;
+            border: 1px solid #eee;
           }
 
           .container {
@@ -106,7 +121,6 @@ const Layout = ({ title, children }: LayoutProps) => {
 
           .button:hover {
             background-color: rgba(0, 0, 0, 0.15);
-            mix-blend-mode: color-burn;
           }
 
           pre {
