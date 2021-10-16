@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "blitz dev",
     "build": "blitz build",
+    "vercel-build": "./vercel-build.sh",
     "start": "blitz start",
     "studio": "blitz prisma studio",
     "lint": "eslint --ignore-path .gitignore --ext .js,.ts,.tsx .",
