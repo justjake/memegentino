@@ -4,6 +4,8 @@ A simple meme generator that can produce memes from a Notion database of meme
 templates. Uses the Notion OAuth API to connect to your Notion workspaces. Embed
 it in an iframe for easy memeing from Notion.
 
+[Get Memegentino for your Notion workspace](https://jitl.notion.site/Memegentino-a88d462ab4d7482c870b1120d4dc49d5)!
+
 ![screenshot of how Notion uses Memegentino](./screenshot.png)
 
 ## Getting Started
