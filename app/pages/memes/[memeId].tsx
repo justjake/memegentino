@@ -1,12 +1,10 @@
 import Layout, { ActionRow } from "app/core/layouts/Layout"
+import { memeImagePath } from "app/memes/memeHelpers"
 import getMeme from "app/memes/queries/getMeme"
-import { Image, Link, BlitzPage, useParam, useQuery, Routes } from "blitz"
+import { Image, Link, BlitzPage, useParam, useQuery, Routes, useParams, useRouter } from "blitz"
 
 const ShowMeme: BlitzPage = () => {
-  const memeId = useParam("memeId", "string")
-  if (!memeId) {
-    throw new Error("where is the meme id?")
-  }
+  const memeId = useParam("memeId", "string") || ""
 
   const [meme] = useQuery(getMeme, { id: memeId })
   const { widthPx, heightPx } = meme
@@ -36,12 +34,24 @@ const ShowMeme: BlitzPage = () => {
       {meme.bottomText && <h1>{meme.bottomText}</h1>}
       <div className="img">
         {widthPx && heightPx ? (
-          <Image width={widthPx} height={heightPx} src={`/api/meme/${memeId}`} />
+          <Image width={widthPx} height={heightPx} src={memeImagePath(memeId)} />
         ) : (
-          <img src={`/api/meme/${memeId}`} />
+          <img src={memeImagePath(memeId)} />
         )}
       </div>
+      {
+        <p>
+          Image URL:{" "}
+          <span className="copyable">
+            {new URL(memeImagePath(memeId), window.location.href).toString()}
+          </span>
+        </p>
+      }
       <style jsx>{`
+        .copyable {
+          user-select: all;
+        }
+
         .actions {
           margin-top: 1em;
           display: flex;
