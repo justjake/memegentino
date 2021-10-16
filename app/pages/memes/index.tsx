@@ -1,6 +1,6 @@
 import Layout, { ActionRow } from "app/core/layouts/Layout"
 import getMemes, { GetMemesInput } from "app/memes/queries/getMemes"
-import { Image, Link, BlitzPage, useParam, useQuery, Routes } from "blitz"
+import { BlitzPage, Image, Link, Routes, useQuery } from "blitz"
 
 const ListMemes: BlitzPage = () => {
   const query: GetMemesInput = {

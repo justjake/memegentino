@@ -17,7 +17,7 @@ export function serverNotionClient(token: DBOAuthToken) {
   })
 }
 
-export interface NotionOAuthToken {
+export interface NotionOAuthTokenResponse {
   access_token: string
   token_type: "bearer"
   bot_id: string
@@ -42,7 +42,7 @@ export interface NotionVerifyCallback {
     req: unknown, // req,
     accessToken: string, // oauthData.access_token,
     _unknown: undefined, // ? undefined,
-    oauthData: NotionOAuthToken, // ? Notion OAuth response?
+    oauthData: NotionOAuthTokenResponse, // ? Notion OAuth response?
     userProfileData: GetUserResponse, // ? get /v1/users/me response?
     callback: (err: Error | undefined, user: unknown, info: unknown) => void
   ): void
@@ -149,7 +149,7 @@ export class NotionStrategy extends Strategy {
     }
   }
 
-  async getOAuthAccessToken(code: string): Promise<NotionOAuthToken> {
+  async getOAuthAccessToken(code: string): Promise<NotionOAuthTokenResponse> {
     let accessTokenURLObject = new URL(this._tokenURL)
 
     const accessTokenBody = {
@@ -172,7 +172,7 @@ export class NotionStrategy extends Strategy {
       method: "POST",
     }
 
-    return new Promise<NotionOAuthToken>((resolve, reject) => {
+    return new Promise<NotionOAuthTokenResponse>((resolve, reject) => {
       const accessTokenRequest = https.request(requestOptions, (res) => {
         let data = ""
         res.on("data", (d) => {
@@ -268,4 +268,21 @@ export function getStableNotionFileUrl(notionFile: CachedNotionFile): string {
   }
   NotionFileUrlCache.set(key, notionFile)
   return notionFile.url
+}
+
+export type DatabaseValue = Pick<
+  notionApiTypes.GetDatabaseResponse,
+  "cover" | "created_time" | "last_edited_time" | "icon" | "id" | "object" | "properties" | "title"
+>
+
+export type SearchResult = notionApiTypes.SearchResponse["results"][number]
+export type DatabaseResult = Extract<SearchResult, { object: "database" }>
+export type RichText = DatabaseResult["title"]
+
+export function resultIsDatabase(result: SearchResult): result is DatabaseResult {
+  return result.object === "database"
+}
+
+export function plainText(text: RichText): string {
+  return text.map((it) => it.plain_text).join()
 }

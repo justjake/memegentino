@@ -1,12 +1,7 @@
+import { APIErrorCode, Client as NotionApiClient, isNotionClientError } from "@notionhq/client"
+import { ClientOptions } from "@notionhq/client/build/src/Client"
 import { BlitzApiHandler, getSession, NextApiRequest, NextApiResponse } from "blitz"
 import db from "db"
-import {
-  APIErrorCode,
-  Client as NotionApiClient,
-  isNotionClientError,
-  LogLevel,
-} from "@notionhq/client"
-import { ClientOptions } from "@notionhq/client/build/src/Client"
 import { env } from "integrations/unix"
 
 const WORKSPACE_ID_PREFIX = "workspace_id:"

@@ -1,37 +1,36 @@
+import { Client as NotionClient } from "@notionhq/client"
+import { ErrorView } from "app/core/components/ErrorBoundary"
+import Form, { FORM_ERROR } from "app/core/components/Form"
+import LabeledTextField from "app/core/components/LabeledTextField"
 import {
   DatabaseRowTitle,
   DatabaseRowValue,
   findAllFiles,
 } from "app/core/components/MemeTemplateGallery"
+import { RecordIcon } from "app/core/components/RecordIcon"
+import { Spinner } from "app/core/components/Spinner"
 import Layout, { ActionRow } from "app/core/layouts/Layout"
+import createMeme, { CreateMeme } from "app/memes/mutations/createMeme"
+import getTemplateImagesAsBase64 from "app/templates/queries/getTemplateImagesAsBase64"
 import {
-  Link,
   BlitzPage,
-  useRouter,
   GetServerSideProps,
-  getSession,
-  useMutation,
   GetServerSidePropsResult,
+  getSession,
+  Link,
+  Routes,
+  useMutation,
   useParam,
   useQuery,
-  Routes,
 } from "blitz"
-import db, { NotionOAuthTokenDefaultFields } from "db"
-import { Client as NotionClient } from "@notionhq/client"
-import { env } from "integrations/unix"
-import { RecordIcon } from "app/core/components/RecordIcon"
-import Form, { FORM_ERROR } from "app/core/components/Form"
-import createMeme, { CreateMeme } from "app/memes/mutations/createMeme"
-import LabeledTextField from "app/core/components/LabeledTextField"
-import { useForm, useFormState } from "react-final-form"
-import { useCallback, useEffect, useRef, useState } from "react"
-import { z } from "zod"
+import db from "db"
 import html2canvas from "html2canvas"
-import { getStableNotionFileKey, getStableNotionFileUrl } from "integrations/notion"
-import { ErrorView } from "app/core/components/ErrorBoundary"
-import getTemplateImagesAsBase64 from "app/templates/queries/getTemplateImagesAsBase64"
-import { Spinner } from "app/core/components/Spinner"
+import { getStableNotionFileKey } from "integrations/notion"
+import { env } from "integrations/unix"
 import router from "next/router"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { useForm } from "react-final-form"
+import { z } from "zod"
 
 interface ShowTemplateProps {
   tokenId: string

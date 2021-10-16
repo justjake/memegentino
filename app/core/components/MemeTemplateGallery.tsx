@@ -2,13 +2,17 @@ import {
   QueryDatabaseParameters,
   QueryDatabaseResponse,
 } from "@notionhq/client/build/src/api-endpoints"
-import { getStableNotionFileUrl, notionClientProxy } from "integrations/notion"
+import { Link, Routes } from "blitz"
+import {
+  DatabaseValue,
+  getStableNotionFileUrl,
+  notionClientProxy,
+  plainText,
+} from "integrations/notion"
+import React, { Suspense, useState } from "react"
 import { useQuery } from "react-query"
-import React, { Suspense, useCallback, useState } from "react"
-import { plainText, DatabaseValue, PickerSearchInput } from "./DatabasePicker"
+import { PickerSearchInput } from "./DatabasePicker"
 import { WorkspaceValue } from "./WorkspacePicker"
-import { Link, Routes, Image } from "blitz"
-import { PickerRow } from "./RecordIcon"
 
 export interface MemeTemplateGalleryProps {
   database: DatabaseValue

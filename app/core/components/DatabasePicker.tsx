@@ -1,32 +1,14 @@
-import { GetDatabaseResponse, SearchResponse } from "@notionhq/client/build/src/api-endpoints"
-import { notionClientProxy } from "integrations/notion"
-import React, { ReactNode, Suspense, useEffect, useMemo, useState } from "react"
+import { DatabaseValue, notionClientProxy, plainText, resultIsDatabase } from "integrations/notion"
+import React, { ReactNode, Suspense, useEffect, useState } from "react"
 import { useQuery } from "react-query"
-import { WorkspaceValue } from "./WorkspacePicker"
 import { PickerCheck, PickerRow, RecordIcon } from "./RecordIcon"
 import { Spinner } from "./Spinner"
-
-export type DatabaseValue = Pick<
-  GetDatabaseResponse,
-  "cover" | "created_time" | "last_edited_time" | "icon" | "id" | "object" | "properties" | "title"
->
+import { WorkspaceValue } from "./WorkspacePicker"
 
 interface DatabasePickerProps {
   workspace: WorkspaceValue
   value?: DatabaseValue
   onChange: (newValue: DatabaseValue) => void
-}
-
-type SearchResult = SearchResponse["results"][number]
-type DatabaseResult = Extract<SearchResult, { object: "database" }>
-type RichText = DatabaseResult["title"]
-
-function resultIsDatabase(result: SearchResult): result is DatabaseResult {
-  return result.object === "database"
-}
-
-export function plainText(text: RichText): string {
-  return text.map((it) => it.plain_text).join()
 }
 
 const USE_DATABASES_LIST = Boolean(process.env.NEXT_PUBLIC_USE_DATABASES_LIST)
