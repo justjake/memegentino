@@ -255,7 +255,7 @@ function MemeEditor(props: { ready: boolean; src: string }) {
 
       form.submit()
     },
-    [form, ready]
+    [form, ready, src]
   )
 
   const topText = form.getFieldState("topText")?.value || ""
