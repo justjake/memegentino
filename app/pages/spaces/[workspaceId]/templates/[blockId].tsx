@@ -27,7 +27,7 @@ import db from "db"
 import html2canvas from "html2canvas"
 import { getStableNotionFileKey, notionClientServer } from "integrations/notion"
 import router from "next/router"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { CSSProperties, MouseEventHandler, useCallback, useEffect, useRef, useState } from "react"
 import { useForm } from "react-final-form"
 import { z } from "zod"
 
@@ -176,11 +176,18 @@ const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId }) => {
 }
 ShowTemplate.getLayout = (page) => <Layout title="Meme workshoppe">{page}</Layout>
 
+interface MemeEditorState {
+  height?: CSSProperties["height"]
+  topText?: { top: number; left: number }
+  bottomText?: { top: number; left: number }
+}
+
 function MemeEditor(props: { ready: boolean; src: string }) {
   const form = useForm<z.infer<typeof CreateMeme>>()
-  const preview = useRef<HTMLDivElement>(null)
+  const [memeDiv, setMemeDiv] = useState<HTMLDivElement | null>(null)
   const [, rerender] = useState({})
   const [reset, setReset] = useState(0)
+  const [state, setState] = useState<MemeEditorState>({})
   const { ready, src } = props
   const [imageIntrinsics, setImageIntrinsics] = useState<
     { width: number; height: number } | undefined
@@ -226,6 +233,39 @@ function MemeEditor(props: { ready: boolean; src: string }) {
     )
   }, [form])
 
+  useEffect(() => {
+    if (!memeDiv) {
+      return
+    }
+
+    // Observe CSS resize handle changes to the `height` style attribute
+    const mutationObserver = new MutationObserver(() => {
+      const height = memeDiv.style.height
+
+      setState(({ height: prevHeight, ...state }) => {
+        if (height === "auto") {
+          return state
+        }
+
+        return {
+          ...state,
+          height,
+        }
+      })
+    })
+
+    mutationObserver.observe(memeDiv, {
+      attributes: true,
+    })
+
+    return () => mutationObserver.disconnect()
+  }, [memeDiv])
+
+  const handleResetHeight = useCallback<MouseEventHandler>((e) => {
+    e.preventDefault()
+    setState(({ height, ...state }) => state)
+  }, [])
+
   const handleCreateMeme = useCallback(
     async (e: any) => {
       if (!ready) {
@@ -235,10 +275,10 @@ function MemeEditor(props: { ready: boolean; src: string }) {
       if (e.preventDefault) {
         e.preventDefault()
       }
-      if (!preview.current) {
+      if (!memeDiv) {
         return
       }
-      const canvas = await html2canvas(preview.current, {
+      const canvas = await html2canvas(memeDiv, {
         scale: 1,
       })
       const width = Math.floor(canvas.width)
@@ -251,11 +291,14 @@ function MemeEditor(props: { ready: boolean; src: string }) {
         form.change("heightPx", height)
         form.change("dataBase64", base64)
         form.change("mimeType", mimeType)
+        if (state) {
+          form.change("effects", JSON.stringify(state))
+        }
       })
 
       form.submit()
     },
-    [form, ready, src]
+    [form, ready, src, memeDiv, state]
   )
 
   const topText = form.getFieldState("topText")?.value || ""
@@ -268,10 +311,10 @@ function MemeEditor(props: { ready: boolean; src: string }) {
       <div
         key={reset}
         className="meme"
-        ref={preview}
+        ref={setMemeDiv}
         style={{
           aspectRatio: imageIntrinsics && `${imageIntrinsics.width} / ${imageIntrinsics.height}`,
-          height: imageIntrinsics ? "auto" : undefined,
+          height: state.height ? state.height : imageIntrinsics ? "auto" : undefined,
         }}
       >
         <div className="top-text">{topText}</div>
@@ -286,7 +329,7 @@ function MemeEditor(props: { ready: boolean; src: string }) {
             </span>
           )}
         </button>
-        <button className="button" onClick={() => setReset(Date.now())}>
+        <button className="button" onClick={handleResetHeight}>
           Reset image size
         </button>
       </div>
@@ -295,7 +338,7 @@ function MemeEditor(props: { ready: boolean; src: string }) {
           text-align: center;
           position: relative;
           width: 100%;
-          height: 800px;
+          height: 0px;
           border: 1px solid black;
           overflow: hidden;
           background-image: url("${src}");
