@@ -1,4 +1,3 @@
-import { Client as NotionClient } from "@notionhq/client"
 import { GetPageResponse } from "@notionhq/client/build/src/api-endpoints"
 import { ErrorView } from "app/core/components/ErrorBoundary"
 import Form, { FORM_ERROR } from "app/core/components/Form"
@@ -27,7 +26,6 @@ import {
 import db from "db"
 import html2canvas from "html2canvas"
 import { getStableNotionFileKey, notionClientServer } from "integrations/notion"
-import { env } from "integrations/unix"
 import router from "next/router"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useForm } from "react-final-form"
@@ -97,7 +95,7 @@ export const getServerSideProps: GetServerSideProps<
 
 const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId }) => {
   const files = findAllFiles(row)
-  const [filesBase64] = useQuery(
+  const [filesBase64, base64Query] = useQuery(
     getTemplateImagesAsBase64,
     {
       workspaceId: useParam("workspaceId", "string") as string,
@@ -105,8 +103,14 @@ const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId }) => {
     },
     {
       suspense: false,
+      enabled: false,
     }
   )
+
+  useEffect(() => {
+    base64Query.refetch()
+  }, [base64Query, row.id])
+
   const [createMutation] = useMutation(createMeme)
 
   return (
@@ -140,7 +144,6 @@ const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId }) => {
           allowBySourceBlock: true,
         }}
         onSubmit={async (values) => {
-          console.warn("onSubmit", values)
           try {
             const meme = await createMutation(values)
             router.push(Routes.ShowMeme({ memeId: meme.id }))
@@ -165,7 +168,7 @@ const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId }) => {
           if (!image) {
             return <ErrorView message={"Failed to load base64 image content"} />
           }
-          return <MemePreview ready={Boolean(filesBase64)} key={file.url} src={image} />
+          return <MemeEditor ready={Boolean(filesBase64)} key={file.url} src={image} />
         })}
       </Form>
     </>
@@ -173,16 +176,48 @@ const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId }) => {
 }
 ShowTemplate.getLayout = (page) => <Layout title="Meme workshoppe">{page}</Layout>
 
-function MemePreview(props: { ready: boolean; src: string }) {
+function MemeEditor(props: { ready: boolean; src: string }) {
   const form = useForm<z.infer<typeof CreateMeme>>()
   const preview = useRef<HTMLDivElement>(null)
   const [, rerender] = useState({})
-  const ready = props.ready
+  const [reset, setReset] = useState(0)
+  const { ready, src } = props
+  const [imageIntrinsics, setImageIntrinsics] = useState<
+    { width: number; height: number } | undefined
+  >(undefined)
+
+  useEffect(() => {
+    if (src === "") {
+      return
+    }
+
+    let canceled = false
+
+    function updateImageIntrinsics() {
+      const img = document.createElement("img")
+      img.src = src
+      img.onload = () => {
+        if (canceled) {
+          return
+        }
+
+        setImageIntrinsics({
+          width: img.width,
+          height: img.height,
+        })
+      }
+    }
+
+    updateImageIntrinsics()
+
+    return () => {
+      canceled = true
+    }
+  }, [src])
 
   useEffect(() => {
     return form.subscribe(
       (data) => {
-        console.log("form changed", data.values)
         rerender({})
       },
       {
@@ -191,7 +226,7 @@ function MemePreview(props: { ready: boolean; src: string }) {
     )
   }, [form])
 
-  const inscribe = useCallback(
+  const handleCreateMeme = useCallback(
     async (e: any) => {
       if (!ready) {
         return
@@ -208,7 +243,7 @@ function MemePreview(props: { ready: boolean; src: string }) {
       })
       const width = Math.floor(canvas.width)
       const height = Math.floor(canvas.height)
-      const mimeType = props.src.includes("image/png") ? "image/png" : "image/jpeg"
+      const mimeType = src.includes("image/png") ? "image/png" : "image/jpeg"
       const base64 = canvas.toDataURL(mimeType).split("base64,")[1]
 
       form.batch(() => {
@@ -225,20 +260,25 @@ function MemePreview(props: { ready: boolean; src: string }) {
 
   const topText = form.getFieldState("topText")?.value || ""
   const bottomText = form.getFieldState("bottomText")?.value || ""
-
   const textShadow = Array(10).fill("0px 0px 3px black").join(",")
-
   const buttonText = ready ? "Inscribe this meme... forever" : "Reticulating splines..."
 
   return (
     <div>
-      <div className="preview" ref={preview}>
-        <img src={props.src} alt="meme template image" />
+      <div
+        key={reset}
+        className="meme"
+        ref={preview}
+        style={{
+          aspectRatio: imageIntrinsics && `${imageIntrinsics.width} / ${imageIntrinsics.height}`,
+          height: imageIntrinsics ? "auto" : undefined,
+        }}
+      >
         <div className="top-text">{topText}</div>
         <div className="bottom-text">{bottomText}</div>
       </div>
       <div className="happening">
-        <button className="button" disabled={!ready} onClick={inscribe}>
+        <button className="button" disabled={!ready} onClick={handleCreateMeme}>
           {buttonText}
           {!ready && (
             <span style={{ marginLeft: 12 }}>
@@ -246,29 +286,27 @@ function MemePreview(props: { ready: boolean; src: string }) {
             </span>
           )}
         </button>
+        <button className="button" onClick={() => setReset(Date.now())}>
+          Reset image size
+        </button>
       </div>
       <style jsx>{`
-        .preview {
+        .meme {
           text-align: center;
           position: relative;
           width: 100%;
+          height: 800px;
           border: 1px solid black;
-           {
-            /* border-radius: 5px; */
-          }
           overflow: hidden;
+          background-image: url("${src}");
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          resize: vertical;
         }
 
         .happening {
           margin-top: 8px;
-        }
-
-        img {
-           {
-            /* max-height: 50vh; */
-          }
-          max-width: 100%;
-          margin-bottom: -5px;
         }
 
         .top-text,
