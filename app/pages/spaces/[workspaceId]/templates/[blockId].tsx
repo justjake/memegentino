@@ -327,9 +327,7 @@ function MemeEditor(props: { ready: boolean; src: string; defaultEffect?: MemeEd
       {
         from: ({ target }) => {
           const targetPos = memeDiv!.getBoundingClientRect()
-          const range = document.createRange()
-          range.selectNodeContents(target as Element)
-          const textPos = range.getBoundingClientRect()
+          const textPos = (target as Element).getBoundingClientRect()
           const initial = addPos(negatePos(targetPos), textPos)
           return [initial.left, initial.top]
         },
@@ -358,15 +356,18 @@ function MemeEditor(props: { ready: boolean; src: string; defaultEffect?: MemeEd
         }}
       >
         <div className="text">
-          <span {...dragTopText()} style={cssAbs(state.topText)}>
+          <span className="draggable" {...dragTopText()} style={cssAbs(state.topText)}>
+            <span className="ui-label bottom">Top text</span>
             {topText}
           </span>
         </div>
         <div className="text">
-          <span {...dragBottomText()} style={cssAbs(state.bottomText)}>
+          <span className="draggable" {...dragBottomText()} style={cssAbs(state.bottomText)}>
+            <span className="ui-label">Bottom text</span>
             {bottomText}
           </span>
         </div>
+        <span className="ui-label resize-label">Resize</span>
       </div>
       <div className="happening">
         <button className="button" disabled={!ready} onClick={handleCreateMeme}>
@@ -406,6 +407,40 @@ function MemeEditor(props: { ready: boolean; src: string; defaultEffect?: MemeEd
           resize: vertical;
         }
 
+        .ui-label {
+          position: absolute;
+          display: none;
+          font-size: 12px;
+          padding: 1px 3px;
+          color: white;
+          pointer-events: none;
+          user-select: none;
+          text-shadow: none;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+            Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+          background: blue;
+          border-radius: 2px 2px 0 0;
+          bottom: calc(100% + 1px);
+        }
+
+        .ui-label.bottom {
+          bottom: initial;
+          top: calc(100% + 1px);
+          border-radius: 0 0 2px 2px;
+        }
+
+        .resize-label {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          padding-right: 10px;
+        }
+
+        .meme:hover .ui-label {
+          display: initial;
+          white-space: nowrap;
+        }
+
         .happening {
           margin-top: 8px;
         }
@@ -417,8 +452,18 @@ function MemeEditor(props: { ready: boolean; src: string; defaultEffect?: MemeEd
           font-size: 3rem;
           text-align: center;
           white-space: pre-wrap;
+        }
+
+        .draggable {
+          cursor: move;
+          position: relative;
           touch-action: none;
           user-select: none;
+        }
+
+        .meme:hover .draggable {
+          box-shadow: 0px 0px 0px 2px blue;
+          border-radius: 1px;
         }
       `}</style>
     </div>
