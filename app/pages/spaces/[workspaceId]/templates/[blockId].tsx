@@ -1,4 +1,5 @@
 import { GetPageResponse } from "@notionhq/client/build/src/api-endpoints"
+import { useDrag } from "@use-gesture/react"
 import { ErrorView } from "app/core/components/ErrorBoundary"
 import Form, { FORM_ERROR } from "app/core/components/Form"
 import LabeledTextField from "app/core/components/LabeledTextField"
@@ -27,13 +28,26 @@ import db from "db"
 import html2canvas from "html2canvas"
 import { getStableNotionFileKey, notionClientServer } from "integrations/notion"
 import router from "next/router"
-import { CSSProperties, MouseEventHandler, useCallback, useEffect, useRef, useState } from "react"
+import {
+  CSSProperties,
+  Dispatch,
+  MouseEventHandler,
+  ReactNode,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react"
 import { useForm } from "react-final-form"
 import { z } from "zod"
 
 interface ShowTemplateProps {
   tokenId: string
   row: DatabaseRowValue
+  defaultEffect?: MemeEditorState
+  topText?: string
+  bottomText?: string
 }
 
 export const getServerSideProps: GetServerSideProps<
@@ -85,15 +99,30 @@ export const getServerSideProps: GetServerSideProps<
     })
   }
 
+  let defaultEffect: MemeEditorState | undefined
+  if (typeof context.query.effects === "string") {
+    defaultEffect = JSON.parse(context.query.effects)
+  }
+
   return {
     props: {
       tokenId: token.bot_id,
+      defaultEffect,
       row,
+      topText: typeof context.query.topText === "string" ? context.query.topText : undefined,
+      bottomText:
+        typeof context.query.bottomText === "string" ? context.query.bottomText : undefined,
     },
   }
 }
 
-const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId }) => {
+const ShowTemplate: BlitzPage<ShowTemplateProps> = ({
+  row,
+  tokenId,
+  defaultEffect,
+  topText,
+  bottomText,
+}) => {
   const files = findAllFiles(row)
   const [filesBase64, base64Query] = useQuery(
     getTemplateImagesAsBase64,
@@ -142,6 +171,8 @@ const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId }) => {
           allowPublic: true,
           allowWorkspace: true,
           allowBySourceBlock: true,
+          topText: topText || "",
+          bottomText: bottomText || "",
         }}
         onSubmit={async (values) => {
           try {
@@ -168,7 +199,14 @@ const ShowTemplate: BlitzPage<ShowTemplateProps> = ({ row, tokenId }) => {
           if (!image) {
             return <ErrorView message={"Failed to load base64 image content"} />
           }
-          return <MemeEditor ready={Boolean(filesBase64)} key={file.url} src={image} />
+          return (
+            <MemeEditor
+              defaultEffect={defaultEffect}
+              ready={Boolean(filesBase64)}
+              key={file.url}
+              src={image}
+            />
+          )
         })}
       </Form>
     </>
@@ -178,53 +216,22 @@ ShowTemplate.getLayout = (page) => <Layout title="Meme workshoppe">{page}</Layou
 
 interface MemeEditorState {
   height?: CSSProperties["height"]
-  topText?: { top: number; left: number }
-  bottomText?: { top: number; left: number }
+  topText?: CSSProperties
+  bottomText?: CSSProperties
 }
 
-function MemeEditor(props: { ready: boolean; src: string }) {
+function MemeEditor(props: { ready: boolean; src: string; defaultEffect?: MemeEditorState }) {
+  const { ready, src, defaultEffect } = props
   const form = useForm<z.infer<typeof CreateMeme>>()
+  const imageIntrinsics = useImageIntrinsics(src)
+
   const [memeDiv, setMemeDiv] = useState<HTMLDivElement | null>(null)
   const [, rerender] = useState({})
-  const [reset, setReset] = useState(0)
-  const [state, setState] = useState<MemeEditorState>({})
-  const { ready, src } = props
-  const [imageIntrinsics, setImageIntrinsics] = useState<
-    { width: number; height: number } | undefined
-  >(undefined)
-
-  useEffect(() => {
-    if (src === "") {
-      return
-    }
-
-    let canceled = false
-
-    function updateImageIntrinsics() {
-      const img = document.createElement("img")
-      img.src = src
-      img.onload = () => {
-        if (canceled) {
-          return
-        }
-
-        setImageIntrinsics({
-          width: img.width,
-          height: img.height,
-        })
-      }
-    }
-
-    updateImageIntrinsics()
-
-    return () => {
-      canceled = true
-    }
-  }, [src])
+  const [state, setState] = useState<MemeEditorState>(defaultEffect || {})
 
   useEffect(() => {
     return form.subscribe(
-      (data) => {
+      () => {
         rerender({})
       },
       {
@@ -233,33 +240,35 @@ function MemeEditor(props: { ready: boolean; src: string }) {
     )
   }, [form])
 
-  useEffect(() => {
-    if (!memeDiv) {
-      return
-    }
+  useEffect(
+    function observeHeightResize() {
+      if (!memeDiv) {
+        return
+      }
 
-    // Observe CSS resize handle changes to the `height` style attribute
-    const mutationObserver = new MutationObserver(() => {
-      const height = memeDiv.style.height
+      const mutationObserver = new MutationObserver(() => {
+        const height = memeDiv.style.height
 
-      setState(({ height: prevHeight, ...state }) => {
-        if (height === "auto") {
-          return state
-        }
+        setState(({ height: prevHeight, ...state }) => {
+          if (height === "auto") {
+            return state
+          }
 
-        return {
-          ...state,
-          height,
-        }
+          return {
+            ...state,
+            height,
+          }
+        })
       })
-    })
 
-    mutationObserver.observe(memeDiv, {
-      attributes: true,
-    })
+      mutationObserver.observe(memeDiv, {
+        attributes: true,
+      })
 
-    return () => mutationObserver.disconnect()
-  }, [memeDiv])
+      return () => mutationObserver.disconnect()
+    },
+    [memeDiv]
+  )
 
   const handleResetHeight = useCallback<MouseEventHandler>((e) => {
     e.preventDefault()
@@ -291,8 +300,12 @@ function MemeEditor(props: { ready: boolean; src: string }) {
         form.change("heightPx", height)
         form.change("dataBase64", base64)
         form.change("mimeType", mimeType)
-        if (state) {
+
+        const hasEffects = Object.values(state).some(Boolean)
+        if (hasEffects) {
           form.change("effects", JSON.stringify(state))
+        } else {
+          form.change("effects", undefined)
         }
       })
 
@@ -301,15 +314,42 @@ function MemeEditor(props: { ready: boolean; src: string }) {
     [form, ready, src, memeDiv, state]
   )
 
+  const useDragText = (key: "topText" | "bottomText") =>
+    useDrag(
+      ({ offset: [left, top] }) => {
+        setState((state) => {
+          const newState = { ...state }
+          const pos = { left, top }
+          newState[key] = pos
+          return newState
+        })
+      },
+      {
+        from: ({ target }) => {
+          const targetPos = memeDiv!.getBoundingClientRect()
+          const range = document.createRange()
+          range.selectNodeContents(target as Element)
+          const textPos = range.getBoundingClientRect()
+          const initial = addPos(negatePos(targetPos), textPos)
+          return [initial.left, initial.top]
+        },
+        bounds: { current: memeDiv },
+      }
+    )
+
+  const dragTopText = useDragText("topText")
+  const dragBottomText = useDragText("bottomText")
+
   const topText = form.getFieldState("topText")?.value || ""
   const bottomText = form.getFieldState("bottomText")?.value || ""
-  const textShadow = Array(10).fill("0px 0px 3px black").join(",")
+  const textShadow = Array(20).fill("0px 0px 3px black").join(",")
   const buttonText = ready ? "Inscribe this meme... forever" : "Reticulating splines..."
+
+  // const topTextStyle: CSSProperties | undefined = state.topText
 
   return (
     <div>
       <div
-        key={reset}
         className="meme"
         ref={setMemeDiv}
         style={{
@@ -317,8 +357,16 @@ function MemeEditor(props: { ready: boolean; src: string }) {
           height: state.height ? state.height : imageIntrinsics ? "auto" : undefined,
         }}
       >
-        <div className="top-text">{topText}</div>
-        <div className="bottom-text">{bottomText}</div>
+        <div className="text">
+          <span {...dragTopText()} style={cssAbs(state.topText)}>
+            {topText}
+          </span>
+        </div>
+        <div className="text">
+          <span {...dragBottomText()} style={cssAbs(state.bottomText)}>
+            {bottomText}
+          </span>
+        </div>
       </div>
       <div className="happening">
         <button className="button" disabled={!ready} onClick={handleCreateMeme}>
@@ -329,12 +377,22 @@ function MemeEditor(props: { ready: boolean; src: string }) {
             </span>
           )}
         </button>
-        <button className="button" onClick={handleResetHeight}>
-          Reset image size
-        </button>
+        <ResetButton state={state} setState={setState} field={"height"}>
+          Reset size
+        </ResetButton>
+        <ResetButton state={state} setState={setState} field={"topText"}>
+          Reset top text position
+        </ResetButton>
+        <ResetButton state={state} setState={setState} field={"bottomText"}>
+          Reset bottom text position
+        </ResetButton>
       </div>
       <style jsx>{`
         .meme {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: space-between;
           text-align: center;
           position: relative;
           width: 100%;
@@ -352,30 +410,127 @@ function MemeEditor(props: { ready: boolean; src: string }) {
           margin-top: 8px;
         }
 
-        .top-text,
-        .bottom-text {
-          position: absolute;
-          left: 0;
-          right: 0;
+        .text {
           font-family: "Impact", sans-serif;
           color: white;
           text-shadow: ${textShadow};
           font-size: 3rem;
           text-align: center;
           white-space: pre-wrap;
-          word-break: break-all;
-        }
-
-        .top-text {
-          top: 0;
-        }
-
-        .bottom-text {
-          bottom: 0;
+          touch-action: none;
+          user-select: none;
         }
       `}</style>
     </div>
   )
+}
+
+interface ImageIntrinsics {
+  width: number
+  height: number
+}
+
+function ResetButton<Key extends string, State extends { [K in Key]?: unknown }>(props: {
+  field: Key
+  state: State
+  setState: Dispatch<SetStateAction<State>>
+  children: ReactNode
+}) {
+  const { field: key, setState, state, children } = props
+
+  const handleClick = useCallback<MouseEventHandler>(
+    (event) => {
+      event.preventDefault()
+      setState((state) => {
+        const newState = {
+          ...state,
+        }
+        delete newState[key]
+        return newState
+      })
+    },
+    [key, setState]
+  )
+
+  if (!state[key]) {
+    return null
+  }
+
+  return (
+    <button className="button" onClick={handleClick}>
+      {children}
+    </button>
+  )
+}
+
+function useImageIntrinsics(src: string): ImageIntrinsics | undefined {
+  const [state, setState] = useState<ImageIntrinsics | undefined>()
+
+  useEffect(() => {
+    if (src === "") {
+      return
+    }
+
+    let canceled = false
+
+    function updateImageIntrinsics() {
+      const img = document.createElement("img")
+      img.src = src
+      img.onload = () => {
+        if (canceled) {
+          return
+        }
+
+        setState({
+          width: img.width,
+          height: img.height,
+        })
+      }
+    }
+
+    updateImageIntrinsics()
+
+    return () => {
+      canceled = true
+    }
+  }, [src])
+
+  return state
+}
+
+interface Pos {
+  top: number
+  left: number
+}
+
+function addPos(a: Pos, b: Pos): Pos {
+  return {
+    top: a.top + b.top,
+    left: a.left + b.left,
+  }
+}
+
+function negatePos(pos: Pos): Pos {
+  return {
+    top: -pos.top,
+    left: -pos.left,
+  }
+}
+
+function cssAbs(css: CSSProperties | undefined): CSSProperties | undefined {
+  if (!css) {
+    return
+  }
+
+  if (css.top !== undefined || css.left !== undefined) {
+    return {
+      ...css,
+      position: "absolute",
+      display: "block",
+    }
+  }
+
+  return css
 }
 
 export default ShowTemplate

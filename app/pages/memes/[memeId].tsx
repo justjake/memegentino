@@ -24,9 +24,12 @@ const ShowMeme: BlitzPage = () => {
             href={Routes.ShowTemplate({
               workspaceId: meme.sourceWorkspaceId,
               blockId: meme.sourceBlockId,
+              effects: meme.effects,
+              topText: meme.topText,
+              bottomText: meme.bottomText,
             })}
           >
-            <a className="button small">Make another like this</a>
+            <a className="button small">Remix</a>
           </Link>
         }
       />
