@@ -12,6 +12,7 @@ import {
 import React, { Suspense, useState } from "react"
 import { useQuery } from "react-query"
 import { PickerSearchInput } from "./DatabasePicker"
+import { Spinner } from "./Spinner"
 import { WorkspaceValue } from "./WorkspacePicker"
 
 export interface MemeTemplateGalleryProps {
@@ -239,7 +240,7 @@ export function MemeTemplateGallery(props: MemeTemplateGalleryProps) {
         // onReload={handleReload}
       />
 
-      <Suspense fallback={null}>
+      <Suspense fallback={<Spinner fullWidth alt="loading your memes templates..." />}>
         <MemeTemplateGalleryList key={reload} search={search} {...props} />
       </Suspense>
 

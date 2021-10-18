@@ -26,7 +26,7 @@ interface WithDatabase {
 
 type AppState = EmptyState | WithWorkspace | WithDatabase
 
-const UserInfo = () => {
+const Home: BlitzPage = () => {
   const currentUser = useCurrentUser()
   const [logoutMutation] = useMutation(logout)
   const [state, setState] = useState<AppState>({})
@@ -152,14 +152,6 @@ const UserInfo = () => {
         }
       `}</style>
     </>
-  )
-}
-
-const Home: BlitzPage = () => {
-  return (
-    <Suspense fallback={<Spinner alt="Loading..." fullWidth />}>
-      <UserInfo />
-    </Suspense>
   )
 }
 
